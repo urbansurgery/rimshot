@@ -9,8 +9,9 @@
       "name": "Cloud Functions"
     },
     {
-      "path": "./topics/addins",
-      "name": "Addins"
+      "path": "./topics/addin",
+      "name": "Addin",
+      "exclude":["./**/dud/**"]
     },
     {
       "path": "./configuration",
