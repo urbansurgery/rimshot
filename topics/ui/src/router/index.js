@@ -12,8 +12,8 @@ const routes = [
   },
   {
     path: '/issuelist/',
-    name: 'Home',
-    component: Home,
+    name: 'EmbeddedViewer',
+    component: () => import('../components/EmbeddedViewer.vue'),
   },
 ];
 
