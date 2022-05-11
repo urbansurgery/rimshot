@@ -9,7 +9,6 @@
     <Import_RootNamespace>Rimshot.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Analysis\ClashElements.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analysis\ClashElements.xaml.cs">
       <DependentUpon>ClashElements.xaml</DependentUpon>
     </Compile>
@@ -17,7 +16,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Analysis\control_SelectedClashes.Designer.cs">
       <DependentUpon>control_SelectedClashes.cs</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)Analysis\TestRunner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BCF\ExportBCF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BCF\ExportBCF.xaml.cs">
       <DependentUpon>ExportBCF.xaml</DependentUpon>
@@ -27,7 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Converters\TreeConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\VisibConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.xaml.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Selections\Selections.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Tools\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Types.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IfcGuid.cs" />
@@ -40,27 +38,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Workshop\IssueListUIBindings.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ClashElements_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ClashElements_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\Display Selection.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ExportBCF_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ExportBCF_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\GatherClashes_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\GatherClashes_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo16.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -71,51 +48,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo32.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowAlsoSelected_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowAlsoSelected_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowAnalysisRegister_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowAnalysisRegister_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowIssueList_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowIssueList_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowIssueRegister_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowIssueRegister_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowOnlySelected_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ShowOnlySelected_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\TestRunner_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\TestRunner_32.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\View Manager.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ViewManager_16.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Images\ViewManager_32.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Utilities\Ionic.Zip.xml" />

@@ -164,13 +164,6 @@ namespace Rimshot.Shared {
 
 
 
-        // Show Issue Register
-        // This is a pane based tool
-        case Tools.ClashElements.Command: {
-            LoadPlugin( plugin: Tools.ClashElements.Plugin, command: commandId );
-            break;
-          }
-
 
         default: {
             MessageBox.Show( "You have clicked on the command with ID = '" + commandId + "'" );
