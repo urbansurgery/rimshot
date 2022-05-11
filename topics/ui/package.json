@@ -1,0 +1,41 @@
+{
+  "dependencies": {
+    "core-js": "^3.22.5",
+    "register-service-worker": "^1.7.2",
+    "vue": "^2.6.14",
+    "vue-router": "^3.5.3",
+    "vuex": "^3.6.2",
+    "vuexfire": "^3.2.5"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.17.0",
+    "@vue/cli-plugin-babel": "~5.0.4",
+    "@vue/cli-plugin-eslint": "~5.0.4",
+    "@vue/cli-plugin-pwa": "~5.0.4",
+    "@vue/cli-plugin-router": "~5.0.4",
+    "@vue/cli-plugin-vuex": "~5.0.4",
+    "@vue/cli-service": "~5.0.4",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "esbuild-loader": "^2.18.0",
+    "eslint": "^8.15.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.7.1",
+    "node-sass": "^7.0.1",
+    "prettier": "^2.6.2",
+    "sass-loader": "^12.6.0",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "name": "ui",
+  "private": true,
+  "scripts": {
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "serve": "vue-cli-service serve"
+  },
+  "version": "0.1.0"
+}

@@ -1,0 +1,43 @@
+{
+  "extends": [
+    "../../configuration/esLintDefaults.json",
+    "plugin:vue/recommended"
+  ],
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "globals": {
+    "document": false,
+    "window": false
+  },
+  "parser": "vue-eslint-parser",
+  "plugins": ["vue", "eslint-plugin-vue", "import"],
+  "rules": { "import/extensions": ["error", { "vue": "always" }] },
+  "settings": {
+    "import/resolver": {
+      "alias": { "map": ["@", "./src"] }
+    }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.vue"],
+      "rules": {
+        "vue/html-closing-bracket-newline": "off",
+        "vue/html-indent": "off",
+        "vue/padding-line-between-blocks": ["error"],
+        "vue/singleline-html-element-content-newline": "off",
+        "vue/multiline-html-element-content-newline": "off",
+        "vue/component-tags-order": [
+          "error",
+          {
+            "order": ["script", "template", "style"]
+          }
+        ],
+        "vue/no-unused-vars": "error",
+        "vue/max-attributes-per-line": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist/", "**/node_modules/**", "package.json"]
+}
