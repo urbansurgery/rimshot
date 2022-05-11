@@ -1,0 +1,11 @@
+{
+  "overrides": [
+    {
+      "files": "**/*.json",
+      "rules": {
+        "json/duplicate-key": "error",
+        "no-multiple-empty-lines": [2, { "max": 0, "maxBOF": 0, "maxEOF": 0 }]
+      }
+    }
+  ]
+}

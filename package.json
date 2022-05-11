@@ -1,0 +1,33 @@
+{
+  "name": "rimshot",
+  "version": "0.1.0",
+  "description": "Realtime Issue Management with Speckle - HOT 🔥!!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsdbroughton/rimshot.git"
+  },
+  "keywords": [
+    "speckle",
+    "bim",
+    "issue-management",
+    "firebase",
+    "navisworks"
+  ],
+  "author": "@jsdbroughton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jsdbroughton/rimshot/issues"
+  },
+  "homepage": "https://github.com/jsdbroughton/rimshot#readme",
+  "devDependencies": {
+    "eslint": "^8.15.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-json": "^3.1.0",
+    "prettier": "^2.6.2"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly",
+    "document": false,
+    "window": false
+  },
+  "parserOptions": {
+    "warnOnUnsupportedTypeScriptVersion": false
+  },
+  "rules": {
+    "node/no-unpublished-require": "off",
+    "node/no-unsupported-features/es-syntax": "off",
+    "quote-props": [
+      "error",
+      "as-needed"
+    ]
+  }
+}

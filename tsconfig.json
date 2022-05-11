@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "rootDirs": ["topics/functions"],
+    "allowJs": true,
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "topics/ui/**",
+    "topics/functions/**/**/node_modules/**",
+    "**/**.json",
+    "**/*.config.js"
+  ]
+}

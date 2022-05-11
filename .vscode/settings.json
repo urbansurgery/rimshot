@@ -1,0 +1,24 @@
+{
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.codeActionsOnSave": ["source.organizeImports", "source.fixAll"],
+  "editor.formatOnSave": true,
+  "eslint.options": {
+    "extensions": [".html", ".js", ".vue", ".jsx", ".ts"]
+  },
+  "eslint.validate": [
+    "javascript",
+    "vue",
+    "html",
+    "typescriptvue",
+    "typescript"
+  ],
+  "eslint.workingDirectories": ["./client"],
+  "typescript.preferences.quoteStyle": "single",
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

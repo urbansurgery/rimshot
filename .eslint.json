@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "plugin:json/recommended",
+    "./configuration/jsonDefaults.json",
+    "./node_modules/gts/",
+    "./configuration/esLintDefaults.json",
+    "eslint-config-prettier",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "json",
+    "eslint-plugin-prettier"
+  ]
+}
