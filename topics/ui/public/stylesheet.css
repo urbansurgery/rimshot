@@ -1,0 +1,3 @@
+.v-application--wrap:first-child {
+  display: none !important;
+}

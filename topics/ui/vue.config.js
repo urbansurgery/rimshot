@@ -11,7 +11,7 @@ module.exports = {
   publicPath: '/',
   chainWebpack: (config) => {
     config.plugin('html').tap((args) => {
-      args[0].title = 'GRFN Embedded Tools';
+      args[0].title = 'Rimstop | Realtime Issue Management with Speckle';
       return args;
     });
     config.devtool('inline-source-map');
