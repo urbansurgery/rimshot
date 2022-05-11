@@ -11,7 +11,9 @@
     {
       "path": "./topics/addin",
       "name": "Addin",
-      "exclude":["./**/dud/**"]
+      "exclude": [
+        "./**/dud/**"
+      ]
     },
     {
       "path": "./configuration",
@@ -39,7 +41,16 @@
       "source.fixAll.eslint": true
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "search.useParentIgnoreFiles": true
+    "search.useParentIgnoreFiles": true,
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/CVS": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/dud":true
+    }
   },
   "extensions": {
     "recommendations": [

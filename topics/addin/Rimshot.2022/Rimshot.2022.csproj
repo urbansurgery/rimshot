@@ -7,7 +7,7 @@
     <ProjectGuid>{A516E8AE-9C5E-4C4E-971D-D1931B8D5530}</ProjectGuid>
     <OutputType>library</OutputType>
     <RootNamespace>Rimshot</RootNamespace>
-    <AssemblyName>Rimshot</AssemblyName>
+    <AssemblyName>Rimshot.Rimshot</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -116,7 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="cef.redist.x64">
-      <Version>101.0.15</Version>
+      <Version>89.0.17</Version>
     </PackageReference>
     <PackageReference Include="cef.redist.x86">
       <Version>89.0.17</Version>
@@ -139,65 +139,47 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
     </PackageReference>
-    <PackageReference Include="Speckle.Core">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.DesktopUI">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.Newtonsoft.Json">
-      <Version>12.0.3.1</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.Objects">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.Transports.Disk">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Console">
-      <Version>4.3.1</Version>
-    </PackageReference>
   </ItemGroup>
-  <Import Project="..\Rimshot\Rimshot.projitems" Label="Shared" />
+  <Import Project="..\Rimshot.Shared\Rimshot.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>@echo off
 echo Check for existing bundle build
-IF EXIST "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)" (
-  echo C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\ exists
+IF EXIST "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)" (
+  echo C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\ exists
   echo Remove Existing Bundle Build
-  rmdir /S /Q "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)"
+  rmdir /S /Q "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)"
 )
 
 echo(
 echo Write Plugin DLL
-xcopy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
 
 echo(
 echo Copy UI Resources
-mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US
-copy /Y "$(TargetDir)\Ribbon\Ribbon.xaml" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
-copy /Y "$(TargetDir)\Ribbon\Ribbon.name" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US
+copy /Y "$(TargetDir)\Ribbon\Ribbon.xaml" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
+copy /Y "$(TargetDir)\Ribbon\Ribbon.name" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
 
 echo(
 echo Copy Resources
-mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images
-copy /Y "$(TargetDir)Images\*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images\"
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images
+copy /Y "$(TargetDir)Images\*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images\"
 
 echo(
 echo Copy Dependencies
-xcopy /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)Cef*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)icudtl.dat" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)snapshot_blob.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)v8_context_snapshot.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
-xcopy /Y "$(TargetDir)devtools_resources.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)Cef*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)icudtl.dat" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)snapshot_blob.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)v8_context_snapshot.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)devtools_resources.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
 
-mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales
-xcopy /Y "$(TargetDir)locales\*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales"
-mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader
-xcopy /Y "$(TargetDir)swiftshader\*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader"
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales
+xcopy /Y "$(TargetDir)locales\*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales"
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader
+xcopy /Y "$(TargetDir)swiftshader\*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader"
 
 
 
