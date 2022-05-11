@@ -1,0 +1,53 @@
+{
+  "folders": [
+    {
+      "path": "./topics/ui",
+      "name": "Frontends"
+    },
+    {
+      "path": "./topics/functions",
+      "name": "Cloud Functions"
+    },
+    {
+      "path": "./topics/addins",
+      "name": "Addins"
+    },
+    {
+      "path": "./configuration",
+      "name": "Configuration"
+    },
+    {
+      "path": "./topics/common",
+      "name": "Common"
+    },
+    {
+      "path": ".",
+      "name": "Root"
+    }
+  ],
+  "settings": {
+    "explorer.confirmDelete": false,
+    "files.associations": {
+      "*.vue": "vue"
+    },
+    "editor.formatOnPaste": true,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "editor.snippetSuggestions": "top",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "search.useParentIgnoreFiles": true
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "octref.vetur",
+      "hbenl.vscode-mocha-test-adapter",
+      "ryanluker.vscode-coverage-gutters"
+    ],
+    "unwantedRecommendations": []
+  }
+}
