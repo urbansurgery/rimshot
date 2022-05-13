@@ -90,28 +90,13 @@ namespace Rimshot.Shared.Workshop {
 
       //{ "branch":"issues/xyz-2","host":"https://speckle.xyz","issueId":"au6SugFWUtOtv601Gekj","stream":"fd1d44405d"}
 
-      //Objects.Geometry.Mesh mesh = new Objects.Geometry.Mesh();
-
-      Objects.Geometry.Plane basePlane = new Objects.Geometry.Plane();
-      Objects.Primitive.Interval xSize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      Objects.Primitive.Interval ySize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      Objects.Primitive.Interval zSize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      Objects.Geometry.Box box = new Objects.Geometry.Box( basePlane, xSize, ySize, zSize );
-
-      List<Objects.Geometry.Box> displayValue = new List<Objects.Geometry.Box>();
-
-      displayValue.Add( box );
-
-      Base myCommit = new Base();
-
-      myCommit[ "displayValue" ] = displayValue;
-
       string description = $"issueId:{issueId}";
 
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
       Client client = new Client( defaultAccount );
 
+      // Get Branch and create if it doesn't exist.
       Branch branch;
       try {
         branch = await client.BranchGet( streamId, branchName );
@@ -122,10 +107,70 @@ namespace Rimshot.Shared.Workshop {
         Console.WriteLine( $"Error: {e.Message}" );
       }
 
-      //var branch = client.BranchGet( streamId, branchName, 1 ).Result;
+      branch = client.BranchGet( streamId, branchName, 1 ).Result;
+
+      if ( branch != null ) {
+        Console.WriteLine( $"Branch {branch.name} established" );
+        NotifyUI( "branch_updated", $"{{\"branch\":\"{branch.name}\",\"issueId\":\"{issueId}\"}}" );
+      }
+
+      // Build Objects
+
+      Objects.Primitive.Interval xSize = new Objects.Primitive.Interval( 1.0, 2.0 );
+      Objects.Primitive.Interval ySize = new Objects.Primitive.Interval( 1.0, 2.0 );
+      Objects.Primitive.Interval zSize = new Objects.Primitive.Interval( 1.0, 2.0 );
+      Objects.Geometry.Box box = new Objects.Geometry.Box( new Objects.Geometry.Plane(
+        new Objects.Geometry.Point( 0, 0, 0 ),
+        new Objects.Geometry.Vector( 0, 0, 1 ),
+        new Objects.Geometry.Vector( 1, 0 ),
+        new Objects.Geometry.Vector( 0, 1 )
+        ), xSize, ySize, zSize );
+
+      List<Objects.Geometry.Box> displayValue = new List<Objects.Geometry.Box>();
+
+      displayValue.Add( box );
+
+      Base element3 = new Base();
+      Base element1 = new Base();
+      Base element2 = new Base();
+
+      element1[ "applicationId" ] = "1";
+      element2[ "applicationId" ] = "2";
+      element3[ "applicationId" ] = "3";
+
+      element1[ "displayValue" ] = displayValue;
+      element2[ "displayValue" ] = displayValue;
+      element3[ "displayValue" ] = displayValue;
+
+      var elements = new List<Base>();
+
+      elements.Add( element1 );
+      elements.Add( element2 );
+      elements.Add( element3 );
 
 
+      Base myCommit = new Base();
 
+      myCommit[ "@Elements" ] = elements;
+      string[] stringseparators = new string[] { "/" };
+      myCommit[ "Issue Number" ] = branchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
+      myCommit[ "applicationId" ] = issueId;
+
+
+      var transport = new ServerTransport( defaultAccount, streamId );
+      var hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
+
+      var commitId = client.CommitCreate( new CommitCreateInput() {
+        branchName = branchName,
+        message = "Rimshot issue commit.",
+        objectId = hash,
+        streamId = streamId,
+        sourceApplication = "Rimshot"
+      } ).Result;
+
+      NotifyUI( "commit_sent", $"{{\"commit\":\"{commitId}\",\"issueId\":\"{issueId}\"}}" );
+
+      client.Dispose();
 
     }
 
@@ -143,7 +188,7 @@ namespace Rimshot.Shared.Workshop {
 
       var branch = client.BranchGet( streamId, branchName );
 
-      Console.WriteLine( value: $"Branch: {branch}" );
+
 
       return branch;
       //try {
