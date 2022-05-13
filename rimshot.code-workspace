@@ -30,6 +30,7 @@
     "files.associations": {
       "*.vue": "vue"
     },
+
     "editor.formatOnPaste": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.snippetSuggestions": "top",
