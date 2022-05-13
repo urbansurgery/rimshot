@@ -23,7 +23,7 @@ namespace Rimshot.Shared.Workshop.IssueList {
 
       ElementHost eh = new ElementHost {
         AutoSize = true,
-        Child = new IssueListPane( address: "https://rimshot.app/issuelist/" )
+        Child = new IssueListPane( /*address: "https://rimshot.app/issues/"*/ )
       };
 
       eh.CreateControl();

@@ -210,7 +210,6 @@ namespace Rimshot.Shared.Workshop {
 
   public partial class IssueListPane : UserControl {
     private string _tempFolder = "";
-    private bool _hasPresence = true;
     readonly Document oDoc = Navis.ActiveDocument;
 
     public class Bindings : UIBindings {
@@ -222,15 +221,16 @@ namespace Rimshot.Shared.Workshop {
 
     public Bindings bindings;
 
-    public IssueListPane ( string address = "http://192.168.86.42:8080/issuelist" ) {
+    public IssueListPane ( string address = Bindings.Url ) {
 
       InitializeCef();
       InitializeComponent();
 
       this.bindings = new Bindings {
         Browser = this.Browser,
-        Window = this
+        Window = this,
       };
+
 
       this.Browser.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;
       this.Browser.JavascriptObjectRepository.Register( "UIBindings", this.bindings, isAsync: true, options: BindingOptions.DefaultBinder );
@@ -253,64 +253,7 @@ namespace Rimshot.Shared.Workshop {
         _ = MessageBox.Show( e.ToString() );
       }
     }
-    public void SendIssueView ( object sender, RoutedEventArgs e ) {
-
-      MemoryStream stream;
-      byte[] imageBytes;
-      Guid id = Guid.NewGuid();
-      SavedViewpoint oNewViewPt1 = new SavedViewpoint( Navis.ActiveDocument.CurrentViewpoint.ToViewpoint() ) {
-        Guid = id,
-        DisplayName = string.Format( "View - {0}", id )
-      };
-      Navis.ActiveDocument.SavedViewpoints.AddCopy( oNewViewPt1 );
-      Image image = new Image( oNewViewPt1 ) { name = "View" };
-
-      ComApi.InwOpState10 oState = ComBridge.State;
-      ComApi.InwOaPropertyVec options = oState.GetIOPluginOptions( "lcodpimage" );
-
-      _tempFolder = Path.Combine( Path.GetTempPath(), "Rimshot.ExportBCF", Path.GetRandomFileName() );
-
-      string imageFolder = Path.Combine( this._tempFolder, image.guid.ToString() );
-      string snapshot = Path.Combine( imageFolder, image.name + ".png" );
-
-      if ( !Directory.Exists( this._tempFolder ) ) Directory.CreateDirectory( this._tempFolder );
-      _ = Directory.CreateDirectory( imageFolder );
-
-      foreach ( ComApi.InwOaProperty opt in options.Properties() ) {
-        if ( opt.name == "export.image.format" ) {
-          opt.value = "lcodpexpng";
-        }
-
-        if ( opt.name == "export.image.width" ) {
-          opt.value = 1600;
-        }
-
-        if ( opt.name == "export.image.height" ) {
-          opt.value = 900;
-        }
-      }
-      oState.DriveIOPlugin( "lcodpimage", snapshot, options );
-
-      try {
-        stream = new MemoryStream();
-
-        System.Drawing.Bitmap oBitmap = new System.Drawing.Bitmap( snapshot );
-        System.Drawing.Bitmap tBitmap = new System.Drawing.Bitmap( snapshot );
-
-        oBitmap.Save( stream, System.Drawing.Imaging.ImageFormat.Jpeg );
-        imageBytes = stream.ToArray();
-        image.image = Convert.ToBase64String( imageBytes );
-
-        var viewpoint = new ImageViewpoint( oNewViewPt1 );
-
-      } catch ( Exception err ) {
-        _ = MessageBox.Show( err.Message );
-      }
-      string imageString = JsonConvert.SerializeObject( image );
-
-      this.bindings.SetImage( imageString );
-      this.bindings.NotifyUI( "new-image", imageString );
-    }
+    private void SendIssueView ( object sender, RoutedEventArgs e ) => this.bindings.AddImage();
 
     private void ShowDevTools ( object sender, EventArgs e ) => this.Browser.ShowDevTools();
 
