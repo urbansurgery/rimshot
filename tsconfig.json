@@ -8,6 +8,7 @@
     "topics/ui/**",
     "topics/functions/**/**/node_modules/**",
     "**/**.json",
-    "**/*.config.js"
+    "**/*.config.js",
+    "./configuration/**"
   ]
 }
