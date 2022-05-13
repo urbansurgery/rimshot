@@ -1,19 +1,68 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Home from '../views/Home.vue';
 
 Vue.use(VueRouter);
+
+const branchRoute = (name) => (to, _from, next) => {
+  const { query, params } = to;
+
+  if (window.UIBindings || query.pane) {
+    return next({ name, query, params });
+  }
+
+  return next();
+};
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: Home,
+    name: 'Root',
+    component: function () {
+      return import('../views/Blank.vue');
+    },
   },
+
   {
-    path: '/issuelist/',
-    name: 'EmbeddedViewer',
-    component: () => import('../components/EmbeddedViewer.vue'),
+    path: '/issues',
+    component: function () {
+      return import('../views/List.vue');
+    },
+    children: [
+      {
+        name: 'issue-list',
+        path: '',
+        component: function () {
+          return import('../views/Web.vue');
+        },
+        beforeEnter: branchRoute('issue-list-pane'),
+        meta: { title: 'Issue List' },
+      },
+      {
+        name: 'issue-list-pane',
+        path: '',
+        component: function () {
+          return import('../views/Pane.vue');
+        },
+        meta: { title: 'Issue List' },
+      },
+      {
+        path: ':workshopId',
+        name: 'workshop',
+        beforeEnter: branchRoute('workshop-pane'),
+        component: function () {
+          return import('../views/Web.vue');
+        },
+        meta: { title: 'Workshop' },
+      },
+      {
+        path: ':workshopId',
+        name: 'workshop-pane',
+        component: function () {
+          return import('../views/Pane.vue');
+        },
+        meta: { title: 'Workshop' },
+      },
+    ],
   },
 ];
 
