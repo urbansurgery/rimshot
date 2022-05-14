@@ -4,7 +4,7 @@
 
 ## [R]ealtime [I]ssue [M]anagement with [S]peckle - HOT! 🔥
 
-https://rimshot.app/
+[https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)
 
 ## Premise ##
 
