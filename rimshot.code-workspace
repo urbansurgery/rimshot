@@ -33,6 +33,7 @@
     "files.associations": {
       "*.vue": "vue"
     },
+
     "editor.formatOnPaste": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "editor.snippetSuggestions": "top",
@@ -42,6 +43,7 @@
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "search.useParentIgnoreFiles": true,
+
     "files.exclude": {
       "**/.git": true,
       "**/.svn": true,
@@ -50,6 +52,10 @@
       "**/.DS_Store": true,
       "**/Thumbs.db": true,
       "**/dud":true
+
+    "[vue]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+
     }
   },
   "extensions": {
