@@ -22,4 +22,5 @@ export default {
     state.isDevMode = Boolean(flag);
   },
   RESET_STATE: () => {},
+  SET_ISSUE_COMMIT: (state, { commitId, stream, issueId }) => {},
 };

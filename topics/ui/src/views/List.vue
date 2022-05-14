@@ -53,6 +53,24 @@
     created() {
       window.Store = this.$store;
       window.EventBus = new Vue();
+
+      window.EventBus.$on('commit_sent', (commitjson) => {
+        if (commitjson) {
+          const commitParams = JSON.parse(commitjson);
+
+          console.log({ commitParams });
+
+          const { stream, issueId, commit, object } = commitParams;
+
+          this.$store.dispatch('RECORD_ISSUE_COMMIT', {
+            issueId,
+            commit,
+            stream,
+            object,
+          });
+        }
+      });
+
       window.EventBus.$on('new-image', (imagejson) => {
         if (imagejson) {
           const image = JSON.parse(imagejson);

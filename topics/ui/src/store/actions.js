@@ -217,4 +217,18 @@ export default {
     }
     return;
   },
+  RECORD_ISSUE_COMMIT: (
+    { commit },
+    { issueId, commit: commitId, stream, object }
+  ) => {
+    commit('SET_ISSUE_COMMIT', { issueId, commit, stream, object });
+
+    db.collection('issues')
+      .doc(issueId)
+      .update({
+        speckle_commit: commitId,
+        speckle_stream: stream,
+        speckle_commit_object: object,
+      });
+  },
 };
