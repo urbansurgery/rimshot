@@ -129,6 +129,25 @@
       };
     },
     computed: {
+      comments() {
+        const mockComments = [
+          'This is fantastic',
+          'This is not good',
+          'This is a good one',
+          'This is a bad one',
+          'This is a terrible one',
+          'This is a terrible one',
+        ].slice(Math.floor(Math.random() * 2), 5);
+
+        if (Math.random() > 0.5) {
+          return mockComments;
+        }
+
+        return [mockComments[Math.floor(Math.random() * mockComments.length)]];
+      },
+      commentCount() {
+        return this.comments.length;
+      },
       isPrint() {
         return window.matchMedia('print').matches;
       },
@@ -136,7 +155,7 @@
         return window.UIBindings;
       },
       speckleBranchName() {
-        const branchName = `${this.$store.state.currentProject?.key?.toLowerCase()}/${
+        const branchName = `issues/${this.$store.state.currentProject?.key?.toLowerCase()}-${
           this.issue?.number
         }`;
         return this.issue?.speckle_branch || branchName;
@@ -145,9 +164,8 @@
         const { speckle_stream, speckle_branch, speckle_host } = this.issue;
         let payload = {
           issueId: this.issue.id,
-          stream:
-            speckle_stream || this.$store.state.currentProject?.speckle_stream,
-          branch: speckle_branch || this.speckleBranchName,
+          stream: this.$store.state.currentProject?.speckle_stream,
+          branch: this.speckleBranchName,
           host: speckle_host || 'https://speckle.xyz',
         };
         if (payload?.stream) {
@@ -200,21 +218,21 @@
           host: speckle_host ?? 'https://speckle.xyz',
           stream: speckle_stream,
           commit: speckle_commit,
-          commitObject: speckle_commit_object ?? null,
+          commitObject: speckle_commit_object,
           object: speckle_object,
         };
-
-        if (speckle_host && speckle_stream && speckle_commit_object) {
-          return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.commitObject}`;
-        }
-
-        if (speckle_host && speckle_stream && speckle_object) {
-        }
-        return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.object}`;
+        // console.log({ urlParts });
+        // if (speckle_host && speckle_stream && speckle_commit_object != false) {
+        //   return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.commitObject}`;
+        // }
 
         if (speckle_host && speckle_stream && speckle_commit) {
           return `${urlParts.host}/streams/${urlParts.stream}/commits/${urlParts.commit}`;
         }
+
+        // if (speckle_host && speckle_stream && speckle_object) {
+        // }
+        // return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.object}`;
 
         return null;
       },
@@ -407,13 +425,17 @@
                       rounded
                       fab
                       x-small
-                      dark
                       class="ultra-small delete"
                       @click="deleteView(view)"
                     >
                       <v-icon>mdi-close-circle</v-icon>
                     </v-btn>
-                    <v-btn rounded fab x-small class="ultra-small badge">
+                    <v-btn
+                      rounded
+                      fab
+                      x-small
+                      class="ultra-small badge primary"
+                    >
                       {{ vindex + 1 }}
                     </v-btn>
                   </v-card>
@@ -504,6 +526,29 @@
           </v-btn>
         </v-col>
       </v-row>
+      <v-spacer class="mb-7" />
+      <v-row
+        v-show="isSelected && commentCount"
+        class="comments"
+        light
+        style="background-color: var(--v-primary-lighten4)"
+      >
+        <v-col cols="12" color="secondary">
+          <v-textarea
+            v-for="(comment, cindex) in comments"
+            :key="cindex"
+            class="issue-field action-field description-field white--text"
+            :class="{ 'empty-field': !comment }"
+            name="input-7-1"
+            label="Comment"
+            light
+            :rows="2"
+            :value="comment"
+            hint="How can we improve this issue?"
+            :auto-grow="true"
+            @change="editIssueField('action-required', $event)"
+        /></v-col>
+      </v-row>
     </v-col>
   </v-row>
 </template>
@@ -562,7 +607,7 @@
       top: -7.5px;
     }
     &.badge {
-      bottom: 0;
+      top: 0;
       font-size: 1.24em;
     }
   }
