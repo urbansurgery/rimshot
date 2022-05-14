@@ -25,16 +25,24 @@ The hackathon submission consists of:
 
 ### An installed webview addin for Navisworks.
 <img src="https://user-images.githubusercontent.com/760691/168424755-e6e887e3-89f0-42aa-9f43-ee712722ace1.png" alt="logo" width="300"/>
+* Model elements selected in Navis will be committed and synced to the app. 
+* Model elements are converted on the fly while the discussion continues.
+* The addin allows for immediate viewport screen capture.
 
 ### An Issue Mangement workshop capture interface.
 <img src="https://user-images.githubusercontent.com/760691/168424792-bcc5870c-e63c-4996-9a8c-4b997917f0b4.png" alt="logo" width="300"/>
+* Structuring the database around a collaborative experience aids quality of Issue resolution. 
 
 ### A realtime multi-party data capture app and database for desktop and mobile devices.
 <img src="https://user-images.githubusercontent.com/760691/168424849-7aca1839-bf19-4226-a1e6-f6d651f1158f.png" alt="logo" width="300"/> <img src="https://user-images.githubusercontent.com/760691/168424963-9d311426-499f-4997-bd9a-5f119f70e821.gif" alt="logo" width="300"/>
+* Using a real-time database allows for all authenticate users to comment and properly describe and issue and its path to resolution.* The responsive app design scales to full screen to handheld.
+* Contributions can be immediate and collaborative.
 
 ### A pattern for managing Model based issues within the Speckle interface.
 <img src="https://user-images.githubusercontent.com/760691/168424905-7967c8c1-0065-44dd-8142-eefc0a5a453d.png" alt="logo" width="300"/>
-
+* Each issue is a separate Speckle branch. 
+* Multiple sub-issues can be made as separate commits to the branch.
+* New issue branches are created automatically
 
 ## Roadmap Post Hackathon ##
 
