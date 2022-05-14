@@ -27,7 +27,7 @@ using Color = System.Drawing.Color;
 namespace Rimshot.Shared.Workshop {
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "https://rimshot.app/issues";
+    const string rimshotUrl = "http://192.168.86.42:8080/issues";
 #else
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
@@ -87,7 +87,6 @@ namespace Rimshot.Shared.Workshop {
       string streamId = commitPayload.stream;
       string host = commitPayload.host;
       string issueId = commitPayload.issueId;
-      //{ "branch":"issues/xyz-2","host":"https://speckle.xyz","issueId":"au6SugFWUtOtv601Gekj","stream":"fd1d44405d"}
 
       string description = $"issueId:{issueId}";
 
@@ -129,7 +128,6 @@ namespace Rimshot.Shared.Workshop {
       Base myCommit = new Base();
       myCommit[ "@Elements" ] = Elements;
 
-      //myCommit[ "@Elements" ] = elements;
       string[] stringseparators = new string[] { "/" };
       myCommit[ "Issue Number" ] = branchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
       myCommit[ "applicationId" ] = issueId;
@@ -144,7 +142,10 @@ namespace Rimshot.Shared.Workshop {
         sourceApplication = "Rimshot"
       } ).Result;
 
-      NotifyUI( "commit_sent", $"{{\"commit\":\"{commitId}\",\"issueId\":\"{issueId}\"}}" );
+      var commitObject = client.CommitGet( streamId, commitId ).Result;
+      var referencedObject = commitObject.referencedObject;
+
+      NotifyUI( "commit_sent", $"{{\"commit\":\"{commitId}\",\"issueId\":\"{issueId}\",\"stream\":\"{streamId}\",\"object\":\"{referencedObject}\"}}" );
 
       client.Dispose();
 
@@ -284,51 +285,7 @@ namespace Rimshot.Shared.Workshop {
       }
 
 
-
-
-
-
-
-
       return baseMeshes;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      //// Build Objects
-
-      //Objects.Primitive.Interval xSize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      //Objects.Primitive.Interval ySize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      //Objects.Primitive.Interval zSize = new Objects.Primitive.Interval( 1.0, 2.0 );
-      //Objects.Geometry.Box box = new Objects.Geometry.Box( new Objects.Geometry.Plane(
-      //  new Objects.Geometry.Point( 0, 0, 0 ),
-      //  new Objects.Geometry.Vector( 0, 0, 1 ),
-      //  new Objects.Geometry.Vector( 1, 0 ),
-      //  new Objects.Geometry.Vector( 0, 1 )
-      //  ), xSize, ySize, zSize );
-
-      //box[ "renderMaterial" ] = TranslateMaterial ( geom );
-
-
-
-      //List<Base> displayValue = new List<Base>();
-
-      //displayValue.Add(box );
-
-
-
-
-      //  return displayValue;
 
     }
 
@@ -343,10 +300,6 @@ namespace Rimshot.Shared.Workshop {
 
       return r;
     }
-
-
-
-
 
     public Task<Branch> CreateBranch ( Client client, string streamId, string branchName, string description ) {
 
