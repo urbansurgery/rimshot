@@ -66,5 +66,10 @@ node_modules/
 # dotenv environment variables file
 .env
 
+/topics/addin/dud
+/topics/addin/Rimshot.2022/bin/x64/Debug
+/topics/addin/Rimshot.2022/obj/x64/Debug
+/topics/addin/Rimshot.2022/obj
+
 SpacePigEmulator.ts
 firebaseConfig.js

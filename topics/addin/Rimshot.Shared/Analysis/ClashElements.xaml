@@ -1,0 +1,185 @@
+﻿<UserControl x:Class="Rimshot.Analysis.ClashElements" 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:NwApi="clr-namespace:Autodesk.Navisworks.Api;assembly=Autodesk.Navisworks.Api" 
+             xmlns:Roamer="clr-namespace:Autodesk.Navisworks.Gui.Roamer.AIRLook;assembly=navisworks.gui.roamer" 
+             xmlns:NwControls="clr-namespace:Autodesk.Navisworks.Api.Controls;assembly=Autodesk.Navisworks.Controls" 
+             xmlns:local="clr-namespace:Rimshot" 
+             xmlns:converters="clr-namespace:Rimshot.Converters" 
+             xmlns:analysis="clr-namespace:Rimshot.Analysis" 
+             mc:Ignorable="d" Name="mainwin">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Color x:Key="Rimshot_Grey">#faf5f0</Color>
+            <Color x:Key="Rimshot_DarkGrey">#e0dcd5</Color>
+            <Color x:Key="Rimshot_Black">#222222</Color>
+            <Color x:Key="Rimshot_Red">#800</Color>
+            <SolidColorBrush x:Key="PaneBackground" Color="{StaticResource Rimshot_Grey}" />
+            <SolidColorBrush x:Key="DefaultText" Color="{StaticResource Rimshot_Black}" />
+            <SolidColorBrush x:Key="Lolight" Color="{StaticResource Rimshot_DarkGrey}" />
+            <SolidColorBrush x:Key="Hilight" Color="{StaticResource Rimshot_Red}" />
+            <FontFamily x:Key="Normal">LTUnivers 530 BasicMedium</FontFamily>
+            <FontFamily x:Key="Bold">LTUnivers 630 BasicBold</FontFamily>
+            <converters:TreeConverter x:Key="treeConverter" />
+            <analysis:RadioConverter x:Key="radioConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="{StaticResource PaneBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.ColumnSpan="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Border 
+                Grid.ColumnSpan="2" 
+                Grid.Row="0" 
+                BorderThickness="0,0,0,0.5" 
+                Margin="0,5,0,0" 
+                Height="18" 
+                BorderBrush="{StaticResource Lolight}"
+                />
+            <CheckBox 
+                Grid.Column="0" 
+                HorizontalAlignment="Right" 
+                Margin="10,0" 
+                IsChecked="{Binding Path=ShowResolved, Mode=TwoWay}" 
+                x:Name="checkbox_ShowResovled" 
+                Style="{StaticResource {x:Static ToolBar.CheckBoxStyleKey}}" 
+                Content="Res" 
+                FontFamily="{StaticResource Bold}"
+                Foreground="{StaticResource DefaultText}"
+                VerticalAlignment="Top" />
+            <CheckBox 
+                Grid.Column="0" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Top" 
+                Margin="40,0" 
+                IsChecked="{Binding Path=ShowAcknowledged, Mode=TwoWay}" 
+                x:Name="checkbox_ShowAcknowledged" 
+                Style="{StaticResource {x:Static ToolBar.CheckBoxStyleKey}}" 
+                Content="Ack"
+                FontFamily="{StaticResource Bold}"
+                Foreground="{StaticResource DefaultText}"
+                />
+            <Border 
+                BorderBrush="{x:Null}" 
+                BorderThickness="0" 
+                Height="15" 
+                Grid.Column="1" 
+                Margin="3,0,90,0" 
+                VerticalAlignment="Top">
+            </Border>
+            <Button 
+                x:Name="button_Filter" 
+                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" 
+                Margin="0,0,70,0" 
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Top" 
+                Content="&#x21bb;" 
+                Foreground="{StaticResource DefaultText}"
+                FontFamily="{StaticResource Bold}"
+                Click="Button_Filter_Click" 
+                Grid.Column="0" />
+        </Grid>
+        <TreeView 
+            ScrollViewer.VerticalScrollBarVisibility="Auto" 
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+            x:Name="zoneTreeView" 
+            ItemsSource="{Binding ZonesTree.Children}" 
+            Grid.Row="1" 
+            Margin="2,0" 
+            Foreground="{StaticResource DefaultText}"
+            Background="{StaticResource PaneBackground}" 
+            BorderThickness="0" 
+            SelectedItemChanged="TreeView_SelectedZoneItemChanged">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasItems, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter Property="FontFamily" Value="{StaticResource Bold}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HasItems, RelativeSource={RelativeSource Self}}" Value="False">
+                            <Setter Property="FontFamily" Value="{StaticResource Normal}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                    <Setter Property="IsExpanded" Value="False" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding DisplayName, Converter={StaticResource treeConverter}}" Margin="2">
+                        <TextBlock.ContextMenu>
+                            <ContextMenu StaysOpen="true">
+                                <MenuItem Header="Show" Click="ShowItemsInSearch" />
+                                <MenuItem Header="Hide" Click="HideItemsInSearch" />
+                                <Separator/>
+                                <MenuItem Header="Select" Click="SelectItemsInSearch" />
+                                <MenuItem Header="Split" Click="SplitByItemsInSearch" />
+                            </ContextMenu>
+                        </TextBlock.ContextMenu>
+                    </TextBlock>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <GridSplitter 
+            Grid.Column="1" 
+            Grid.Row="1" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Stretch" 
+            ShowsPreview="True" 
+            Width="3" 
+            Background="Transparent" 
+            BorderThickness="1,0" 
+            BorderBrush="Black" />
+        <TreeView 
+            ScrollViewer.VerticalScrollBarVisibility="Auto" 
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+            x:Name="clashTreeView" 
+            ItemsSource="{Binding ClashTree.Children}" 
+            Grid.Row="1" 
+            Grid.Column="2" 
+            Margin="2,0" 
+            Background="#FFFAF5F0" 
+            BorderThickness="0"
+            SelectedItemChanged="TreeView_SelectedClashItemChanged">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasItems, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter Property="FontFamily" Value="{StaticResource Bold}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HasItems, RelativeSource={RelativeSource Self}}" Value="False">
+                            <Setter Property="FontFamily" Value="{StaticResource Normal}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                    <Setter Property="IsExpanded" Value="False" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding DisplayName, Converter={StaticResource treeConverter}}" Margin="2" />
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <Grid Grid.Row="2" Grid.ColumnSpan="5" Margin="0,5,0,5">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="0" >
+                <Button x:Name="button_MakeSets" Content="Make Sets" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" FontFamily="{StaticResource Bold}" VerticalAlignment="Center" Width="70" Background="{x:Null}" BorderThickness="2" Click="Button_MakeSets_Click" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

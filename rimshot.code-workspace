@@ -9,8 +9,11 @@
       "name": "Cloud Functions"
     },
     {
-      "path": "./topics/addins",
-      "name": "Addins"
+      "path": "./topics/addin",
+      "name": "Addin",
+      "exclude": [
+        "./**/dud/**"
+      ]
     },
     {
       "path": "./configuration",
@@ -40,8 +43,19 @@
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "search.useParentIgnoreFiles": true,
+
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/CVS": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/dud":true
+
     "[vue]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
+
     }
   },
   "extensions": {

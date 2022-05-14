@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BE59ED10-D74C-42B3-9A27-EFBAF5BFBB8E}</ProjectGuid>
+    <OutputType>library</OutputType>
+    <RootNamespace>Rimshot</RootNamespace>
+    <AssemblyName>Rimshot.Rimshot</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <Deterministic>true</Deterministic>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files\Autodesk\Navisworks Manage 2021\Roamer.exe</StartProgram>
+    <NavisworksApiPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\</NavisworksApiPath>
+    <NavisworksBuildNumber>v18</NavisworksBuildNumber>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;IS2021</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;IS2021</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AdWindows">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\AdWindows.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.Api">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\Autodesk.Navisworks.Api.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.Clash">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\Autodesk.Navisworks.Clash.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.ComApi">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\Autodesk.Navisworks.ComApi.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.Controls">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\Autodesk.Navisworks.Controls.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Autodesk.Navisworks.Interop.ComApi">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\Autodesk.Navisworks.Interop.ComApi.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="navisworks.gui.interface">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\navisworks.gui.interface.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="navisworks.gui.roamer">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2021\navisworks.gui.roamer.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Controls.Ribbon" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Serialization" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="cef.redist.x64">
+      <Version>89.0.17</Version>
+    </PackageReference>
+    <PackageReference Include="cef.redist.x86">
+      <Version>89.0.17</Version>
+    </PackageReference>
+    <PackageReference Include="CefSharp.Common">
+      <Version>89.0.170</Version>
+    </PackageReference>
+    <PackageReference Include="CefSharp.Wpf">
+      <Version>89.0.170</Version>
+    </PackageReference>
+    <PackageReference Include="Google.Cloud.SecretManager.V1">
+      <Version>1.4.0</Version>
+    </PackageReference>
+    <PackageReference Include="Google.Cloud.Storage.V1">
+      <Version>3.4.0</Version>
+    </PackageReference>
+    <PackageReference Include="Ionic.Zip-1.9.1.8">
+      <Version>1.9.1.8</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="..\Rimshot.Shared\Rimshot.Shared.projitems" Label="Shared" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>@echo off
+echo Check for existing bundle build
+IF EXIST "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)" (
+  echo C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\ exists
+  echo Remove Existing Bundle Build
+  rmdir /S /Q "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)"
+)
+
+echo(
+echo Write Plugin DLL
+xcopy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+
+echo(
+echo Copy UI Resources
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US
+copy /Y "$(TargetDir)\Ribbon\Ribbon.xaml" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
+copy /Y "$(TargetDir)\Ribbon\Ribbon.name" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\en-US\"
+
+echo(
+echo Copy Resources
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images
+copy /Y "$(TargetDir)Images\*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\Images\"
+
+echo(
+echo Copy Dependencies
+xcopy /Y "$(TargetDir)*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)Cef*.*" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)icudtl.dat" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)snapshot_blob.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)v8_context_snapshot.bin" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+xcopy /Y "$(TargetDir)devtools_resources.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales
+xcopy /Y "$(TargetDir)locales\*.pak" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\locales"
+mkdir "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader
+xcopy /Y "$(TargetDir)swiftshader\*.dll" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\swiftshader"
+
+
+
+
+
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>
