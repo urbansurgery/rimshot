@@ -23,6 +23,7 @@
     {
       "files": ["**/*.vue"],
       "rules": {
+        "vue/no-v-html": "off",
         "vue/html-closing-bracket-newline": "off",
         "vue/html-indent": "off",
         "vue/padding-line-between-blocks": ["error"],

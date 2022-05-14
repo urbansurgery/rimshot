@@ -1,31 +1,58 @@
+<script>
+  export default {
+    name: 'App',
+    data: () => ({}),
+    computed: {
+      route() {
+        return this.$route;
+      },
+      theme() {
+        return this.$vuetify.theme.dark ? 'dark' : 'light';
+      },
+    },
+    watch: {
+      route(to) {
+        this.$store.commit(
+          'SET_EMBEDDED',
+          Boolean(window.UIBindings) || to.query.pane
+        );
+      },
+    },
+    mounted() {
+      this.$store.commit(
+        'SET_DEV_MODE',
+        process.env.NODE_ENV === 'development'
+      );
+    },
+  };
+</script>
+
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-    </div>
-    <router-view />
+    <v-app
+      dark
+      :style="{ background: $vuetify.theme.themes[theme].background }"
+    >
+      <router-view />
+    </v-app>
   </div>
 </template>
 
 <style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
-
-#nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
-    }
+  body {
+    margin: 0;
+    overflow-y: hidden;
   }
-}
+
+  #app {
+    background-color: var(--v-background-lighten1);
+    font-family: Space Grotesk, sans-serif; /* 1 */
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    overflow-y: auto !important;
+  }
 </style>
