@@ -31,6 +31,7 @@ The hackathon submission consists of:
 
 ## Roadmap Post Hackathon ##
 
+* Proper linking with Auth flow and project/stream selection.
 * Syncing of Comments between the two databases - near realtime.
 * More responsive syncing. Allow Speckle to push to the app (perhaps closing out issues, 3rd party commits)
 * Sorting out the 🔥HOT MESS🔥 of the Navisworks geometry translation.
