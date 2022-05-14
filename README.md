@@ -19,6 +19,11 @@ Utilising two aspects that I admire of Speckle:
 1. Information Hub and low-friction data transfer.
 2. Bring people to the Model.
 
+
+[<img src="https://img.youtube.com/vi/1lUDgHJP7H4/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://www.youtube.com/watch?v=1lUDgHJP7H4)
+
+
+
 ## Components ##
 
 The hackathon submission consists of:
