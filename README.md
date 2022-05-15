@@ -22,30 +22,30 @@ Utilising two aspects that I admire of Speckle:
 [<img src="https://img.youtube.com/vi/1lUDgHJP7H4/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://www.youtube.com/watch?v=1lUDgHJP7H4)
 
 ## Usage ##
-### Adding details to issues 
+### Analyst view within Navisworks 
 1. Install the addin as a application plugin bundle
 
 2. Launch Navisworks and select plugin<br />![Screenshot 2022-05-15 at 15 52 06](https://user-images.githubusercontent.com/760691/168479138-d8a8c4bf-23dc-4448-af03-82c6c97bdbaf.png)
 
-3. Select a project and workshop (already created in the rimshot database)<br /><img src="https://user-images.githubusercontent.com/760691/168478184-d156c87e-fc48-4bca-976e-978b32da90f5.gif" alt="logo" width="300"/>
+3. Select a project and workshop (already created in the rimshot database)<br /><img src="https://user-images.githubusercontent.com/760691/168478184-d156c87e-fc48-4bca-976e-978b32da90f5.gif" alt="logo" width="500"/>
 
 4. Select an issue to commit to.
 
-5. Elements selected in Navisworks will be committed as Speckle Mesh to the corresponding branch (created new if not existing)<br /><img src="https://user-images.githubusercontent.com/760691/168478021-95c36dff-27c2-4c62-8848-6a124c08b017.gif" alt="logo" width="450"/>
+5. Elements selected in Navisworks will be committed as Speckle Mesh to the corresponding branch (created new if not existing)<br /><img src="https://user-images.githubusercontent.com/760691/168478021-95c36dff-27c2-4c62-8848-6a124c08b017.gif" alt="logo" width="500"/>
 
-6. Selecting **Snapshot** adds an image to the existing issue of whatever is visible in the viewport. If no issue is selected, snapshotting ceates a new issue and corresponding branch.<br /><img src="https://user-images.githubusercontent.com/760691/168477299-89156cdb-2b73-4546-9329-597f97756711.gif" alt="logo" width="450"/>
+6. Selecting **Snapshot** adds an image to the existing issue of whatever is visible in the viewport. If no issue is selected, snapshotting ceates a new issue and corresponding branch.<br /><img src="https://user-images.githubusercontent.com/760691/168477299-89156cdb-2b73-4546-9329-597f97756711.gif" alt="logo" width="500"/>
 
 
-### Contributors
-1. The analyst can share a unique secure URL to the workshop record. (https://rimshot.app/issues/{UNIQUE ID})<br /><img src="https://user-images.githubusercontent.com/760691/168478466-3fd4b879-8d4b-4619-88f6-59c27ecfb1e7.gif" alt="logo" width="450"/>
+### Contributors view
+1. The analyst can share a unique secure URL to the workshop record. (https://rimshot.app/issues/{UNIQUE ID})<br /><img src="https://user-images.githubusercontent.com/760691/168478466-3fd4b879-8d4b-4619-88f6-59c27ecfb1e7.gif" alt="logo" width="500"/>
 
-2. All visitors to that web page can see images and Speckle commits being added. <br /><img src="https://user-images.githubusercontent.com/760691/168478471-2aa752d1-6eef-4056-9b26-16b709819fb3.gif" alt="logo" width="450"/>
+2. All visitors to that web page can see images and Speckle commits being added. <br /><img src="https://user-images.githubusercontent.com/760691/168478471-2aa752d1-6eef-4056-9b26-16b709819fb3.gif" alt="logo" width="500"/>
 
 3. "Follow-mode" scrolls to the issue currently being presented by the Analyst. Selecting a different issue cancels Follow Mode<br />![image](https://user-images.githubusercontent.com/760691/168476968-7060e291-9d7e-498a-b3b8-f8ed4938c3e7.png)
 
-4. All contributors can comment and edit the descriptive and the metadata fields.<br /><img src="https://user-images.githubusercontent.com/760691/168476993-6ccfe39e-8123-417c-9f40-004b8a831344.png" alt="logo" width="450"/>
+4. All contributors can comment and edit the descriptive and the metadata fields.<br /><img src="https://user-images.githubusercontent.com/760691/168476993-6ccfe39e-8123-417c-9f40-004b8a831344.png" alt="logo" width="500"/>
 
-5. The commited model can be viewed in the Rimshot app or the corresponding Speckle Server branch.<br /><img src="https://user-images.githubusercontent.com/760691/168479389-8659d7ae-62b0-4dd3-a7ba-a69a2e0c57f8.gif" alt="logo" width="450"/>
+5. The commited model can be viewed in the Rimshot app or the corresponding Speckle Server branch.<br /><img src="https://user-images.githubusercontent.com/760691/168479389-8659d7ae-62b0-4dd3-a7ba-a69a2e0c57f8.gif" alt="logo" width="500"/>
 
 6. The workshop record can be downloaded as in CSV file format.<br />![image](https://user-images.githubusercontent.com/760691/168476944-d886be18-3d9e-46f0-ab43-dac61ba2c3e0.png)
 
