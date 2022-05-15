@@ -23,8 +23,9 @@ Utilising two aspects that I admire of Speckle:
 
 ## Usage ##
 ### Adding details to issues 
-1. Install the addin as a application plugin bunmdle
-2. Launch Navisworks
+1. Install the addin as a application plugin bundle
+2. Launch Navisworks and select plugin<br />![Screenshot 2022-05-15 at 15 52 06](https://user-images.githubusercontent.com/760691/168479138-d8a8c4bf-23dc-4448-af03-82c6c97bdbaf.png)
+
 3. Select a project and workshop (already created in the rimshot database)<br />![Screen Recording 2022-05-15 at 15 29 55 2022-05-15 15_31_59](https://user-images.githubusercontent.com/760691/168478184-d156c87e-fc48-4bca-976e-978b32da90f5.gif)
 
 4. Select an issue to commit to
