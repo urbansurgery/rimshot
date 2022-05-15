@@ -21,6 +21,9 @@ Utilising two aspects that I admire of Speckle:
 
 [<img src="https://img.youtube.com/vi/1lUDgHJP7H4/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://www.youtube.com/watch?v=1lUDgHJP7H4)
 
+[The XYZ project stream used in the demo](https://speckle.xyz/streams/cb23d07ec2)
+
+
 ## Usage ##
 ### Analyst view within Navisworks 
 1. Install the addin as a application plugin bundle
