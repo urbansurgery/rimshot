@@ -41,6 +41,8 @@ Utilising two aspects that I admire of Speckle:
 3. "Follow-mode" scrolls to the issue currently being presented by the Analyst. Selecting a different issue cancels Follow Mode<br />![image](https://user-images.githubusercontent.com/760691/168476968-7060e291-9d7e-498a-b3b8-f8ed4938c3e7.png)
 
 4. All contributors can comment and edit the descriptive and the metadata fields.<br />![image](https://user-images.githubusercontent.com/760691/168476993-6ccfe39e-8123-417c-9f40-004b8a831344.png)
+5. The commited model can be viewed in the Rimshot app or the corresponding Speckle Server branch.<br />![Screen Recording 2022-05-15 at 15 54 31 2022-05-15 15_56_51](https://user-images.githubusercontent.com/760691/168479389-8659d7ae-62b0-4dd3-a7ba-a69a2e0c57f8.gif)
+
 
 6. The workshop record can be downloaded as in CSV file format.<br />![image](https://user-images.githubusercontent.com/760691/168476944-d886be18-3d9e-46f0-ab43-dac61ba2c3e0.png)
 
