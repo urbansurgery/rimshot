@@ -28,13 +28,18 @@ Utilising two aspects that I admire of Speckle:
 3. Select a project and workshop (already created in the rimshot database)
 4. Select an issue to commit to
 5. Elements selected in Navisworks will be committed as Speckle Mesh to the corresponding branch (created new if not existing)
-6. Selecting **Snapshot** adds an image to the existing issue of whatever is visible in the viewport. If no issue is selected, snapshotting ceates a new issue and corresponding branch.
+6. Selecting **Snapshot** adds an image to the existing issue of whatever is visible in the viewport. If no issue is selected, snapshotting ceates a new issue and corresponding branch.<br />![Screen Recording 2022-05-15 at 15 12 20 2022-05-15 15_14_31](https://user-images.githubusercontent.com/760691/168477299-89156cdb-2b73-4546-9329-597f97756711.gif)
+
 
 ### Contributors
 1. The analyst can share a unique secure URL to the workshop record. (https://rimshot.app/issues/{UNIQUE ID})
 2. All visitors to that web page can see images and Speckle commits being added. 
-3. "Follow-mode" scrolls to the issue currently being presented by the Analyst. Selecting a different issue cancels Follow Mode
-4. All contributors can comment and edit the descriptive and the metadata fields.
+3. "Follow-mode" scrolls to the issue currently being presented by the Analyst. Selecting a different issue cancels Follow Mode<br />![image](https://user-images.githubusercontent.com/760691/168476968-7060e291-9d7e-498a-b3b8-f8ed4938c3e7.png)
+
+4. All contributors can comment and edit the descriptive and the metadata fields.<br />![image](https://user-images.githubusercontent.com/760691/168476993-6ccfe39e-8123-417c-9f40-004b8a831344.png)
+
+6. The workshop record can be downloaded as in CSV file format.<br />![image](https://user-images.githubusercontent.com/760691/168476944-d886be18-3d9e-46f0-ab43-dac61ba2c3e0.png)
+
 
 
 ## Components ##
