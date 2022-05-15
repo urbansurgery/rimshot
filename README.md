@@ -25,15 +25,18 @@ Utilising two aspects that I admire of Speckle:
 ### Adding details to issues 
 1. Install the addin as a application plugin bunmdle
 2. Launch Navisworks
-3. Select a project and workshop (already created in the rimshot database)
+3. Select a project and workshop (already created in the rimshot database)<br />![Screen Recording 2022-05-15 at 15 29 55 2022-05-15 15_31_59](https://user-images.githubusercontent.com/760691/168478184-d156c87e-fc48-4bca-976e-978b32da90f5.gif)
+
 4. Select an issue to commit to
-5. Elements selected in Navisworks will be committed as Speckle Mesh to the corresponding branch (created new if not existing)
+5. Elements selected in Navisworks will be committed as Speckle Mesh to the corresponding branch (created new if not existing)<br />![Screen Recording 2022-05-15 at 15 26 00 2022-05-15 15_28_19](https://user-images.githubusercontent.com/760691/168478021-95c36dff-27c2-4c62-8848-6a124c08b017.gif)
+
 6. Selecting **Snapshot** adds an image to the existing issue of whatever is visible in the viewport. If no issue is selected, snapshotting ceates a new issue and corresponding branch.<br />![Screen Recording 2022-05-15 at 15 12 20 2022-05-15 15_14_31](https://user-images.githubusercontent.com/760691/168477299-89156cdb-2b73-4546-9329-597f97756711.gif)
 
 
 ### Contributors
-1. The analyst can share a unique secure URL to the workshop record. (https://rimshot.app/issues/{UNIQUE ID})
-2. All visitors to that web page can see images and Speckle commits being added. 
+1. The analyst can share a unique secure URL to the workshop record. (https://rimshot.app/issues/{UNIQUE ID})<br />![Screen Recording 2022-05-15 at 15 33 22 2022-05-15 15_35_01](https://user-images.githubusercontent.com/760691/168478466-3fd4b879-8d4b-4619-88f6-59c27ecfb1e7.gif)
+2. All visitors to that web page can see images and Speckle commits being added. <br />![Screen Recording 2022-05-15 at 15 35 29 2022-05-15 15_37_40](https://user-images.githubusercontent.com/760691/168478471-2aa752d1-6eef-4056-9b26-16b709819fb3.gif)
+
 3. "Follow-mode" scrolls to the issue currently being presented by the Analyst. Selecting a different issue cancels Follow Mode<br />![image](https://user-images.githubusercontent.com/760691/168476968-7060e291-9d7e-498a-b3b8-f8ed4938c3e7.png)
 
 4. All contributors can comment and edit the descriptive and the metadata fields.<br />![image](https://user-images.githubusercontent.com/760691/168476993-6ccfe39e-8123-417c-9f40-004b8a831344.png)
