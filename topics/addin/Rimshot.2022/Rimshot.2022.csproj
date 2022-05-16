@@ -123,7 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="cef.redist.x64">
-      <Version>89.0.17</Version>
+      <Version>101.0.18</Version>
     </PackageReference>
     <PackageReference Include="cef.redist.x86">
       <Version>89.0.17</Version>
