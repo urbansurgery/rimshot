@@ -1,6 +1,6 @@
 # Rimshot
 
-<img src="https://github.com/jsdbroughton/rimshot/blob/main/logo.png?raw=true" alt="logo" width="200"/>
+<img src="https://github.com/jsdbroughton/rimshot/blob/main/topics/addin/Rimshot.Shared/Images/logo.png?raw=true" alt="logo" width="200"/>
 
 ## [R]ealtime [I]ssue [M]anagement with [S]peckle - HOT! 🔥
 
