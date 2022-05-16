@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Rimshot.Tools {
+﻿namespace Rimshot.Tools {
   public static class BCFExport {
     public const string Plugin = "Rimshot.BCFPlugin";
     public const string Command = "Rimshot_Button_ExportBCF";

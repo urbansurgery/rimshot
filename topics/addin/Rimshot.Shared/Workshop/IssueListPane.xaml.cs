@@ -1,18 +1,13 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.IO;
-using Autodesk.Navisworks.Api;
+﻿using Autodesk.Navisworks.Api;
 using CefSharp;
 using CefSharp.Wpf;
-using Newtonsoft.Json;
-
-using Path = System.IO.Path;
-using Navis = Autodesk.Navisworks.Api.Application;
-using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
-using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
+using Speckle.Newtonsoft.Json;
+using System;
 using System.Runtime.ExceptionServices;
-using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using Navis = Autodesk.Navisworks.Api.Application;
+using Path = System.IO.Path;
 
 namespace Rimshot.Shared.Workshop {
   public class Image {
@@ -31,8 +26,7 @@ namespace Rimshot.Shared.Workshop {
       this.name = view.DisplayName;
       this.guid = view.Guid;
 
-      var vp = new ImageViewpoint( view );
-      var viewpoint = JsonConvert.SerializeObject( vp );
+      ImageViewpoint vp = new ImageViewpoint( view );
 
       this.viewpoint = vp;
     }
@@ -88,10 +82,10 @@ namespace Rimshot.Shared.Workshop {
         zoom = "FieldOfView";
 
         try { zoomValue = vp.FocalDistance; } catch ( Exception err ) {
-          Console.WriteLine( "No Focal Distance, Are you looking at anything?" );
+          Console.WriteLine( $"No Focal Distance, Are you looking at anything?\n{err.Message}" );
         }
       } else {
-        MessageBox.Show( "No View" );
+        _ = MessageBox.Show( "No View" );
       }
 
       this.FieldOfView = vp.HeightField;
@@ -110,8 +104,6 @@ namespace Rimshot.Shared.Workshop {
     }
 
     private Vector3D GetViewDir ( Viewpoint oVP ) {
-      //double units = GetGunits();
-
       Rotation3D oRot = oVP.Rotation;
       // calculate view direction
       Rotation3D oNegtiveZ = new Rotation3D( 0, 0, -1, 0 );
@@ -122,12 +114,6 @@ namespace Rimshot.Shared.Workshop {
 
       return oViewDir.Normalize();
     }
-
-    /// <summary>
-    /// Get View Normal
-    /// </summary>
-    /// <param name="oVP"></param>
-    /// <returns></returns>
     private Vector3D GetViewUp ( Viewpoint oVP ) {
 
       Rotation3D oRot = oVP.Rotation;
@@ -141,25 +127,15 @@ namespace Rimshot.Shared.Workshop {
       return oViewDir.Normalize();
     }
 
-    /// <summary>
-    /// help function: Multiply two Rotation3D
-    /// </summary>
-    /// <param name="r2"></param>
-    /// <param name="r1"></param>
-    /// <returns></returns>
     private Rotation3D MultiplyRotation3D ( Rotation3D r2, Rotation3D r1 ) {
 
       Rotation3D oRot =
-          new Rotation3D( r2.D * r1.A + r2.A * r1.D +
-                              r2.B * r1.C - r2.C * r1.B,
-                          r2.D * r1.B + r2.B * r1.D +
-                              r2.C * r1.A - r2.A * r1.C,
-                          r2.D * r1.C + r2.C * r1.D +
-                              r2.A * r1.B - r2.B * r1.A,
-                          r2.D * r1.D - r2.A * r1.A -
-                              r2.B * r1.B - r2.C * r1.C );
+          new Rotation3D( r2.D * r1.A + r2.A * r1.D + r2.B * r1.C - r2.C * r1.B,
+                          r2.D * r1.B + r2.B * r1.D + r2.C * r1.A - r2.A * r1.C,
+                          r2.D * r1.C + r2.C * r1.D + r2.A * r1.B - r2.B * r1.A,
+                          r2.D * r1.D - r2.A * r1.A - r2.B * r1.B - r2.C * r1.C );
 
-      oRot.Normalize();
+      _ = oRot.Normalize();
 
       return oRot;
 
@@ -206,18 +182,8 @@ namespace Rimshot.Shared.Workshop {
       return factor;
     }
   }
-
-
   public partial class IssueListPane : UserControl {
-    private string _tempFolder = "";
-    readonly Document oDoc = Navis.ActiveDocument;
-
-    public class Bindings : UIBindings {
-
-
-
-
-    }
+    public class Bindings : UIBindings { }
 
     public Bindings bindings;
 

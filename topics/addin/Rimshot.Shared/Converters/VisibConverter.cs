@@ -2,15 +2,13 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Rimshot.Converters
-{
+namespace Rimshot.Converters {
 
   /// <summary>
   /// Converter used on Navis2BCFWin.xaml to enalbe/disable a button depending if there are or not
   /// issues in the listview to be saved in the BCF file
   /// </summary>
-  public class VisibConverter : IValueConverter
-  {
+  public class VisibConverter : IValueConverter {
 
     /// <summary>
     /// Convert
@@ -20,9 +18,8 @@ namespace Rimshot.Converters
     /// <param name="parameter"></param>
     /// <param name="culture"></param>
     /// <returns></returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      if ((int)value != 0)
+    public object Convert ( object value, Type targetType, object parameter, CultureInfo culture ) {
+      if ( ( int )value != 0 )
         return true;
       else return false;
     }
@@ -35,8 +32,7 @@ namespace Rimshot.Converters
     /// <param name="parameter"></param>
     /// <param name="culture"></param>
     /// <returns></returns>
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
+    public object ConvertBack ( object value, Type targetType, object parameter, CultureInfo culture ) {
 
       throw new NotImplementedException();
     }

@@ -39,8 +39,9 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
-    <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+    <CopySQLiteInteropFiles>true</CopySQLiteInteropFiles>
     <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
     <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
   </PropertyGroup>
@@ -133,31 +134,16 @@
     <PackageReference Include="CefSharp.Wpf">
       <Version>89.0.170</Version>
     </PackageReference>
-    <PackageReference Include="Google.Cloud.SecretManager.V1">
-      <Version>1.4.0</Version>
-    </PackageReference>
-    <PackageReference Include="Google.Cloud.Storage.V1">
-      <Version>3.4.0</Version>
-    </PackageReference>
     <PackageReference Include="Ionic.Zip-1.9.1.8">
       <Version>1.9.1.8</Version>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.1</Version>
-    </PackageReference>
     <PackageReference Include="Speckle.Core">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.DesktopUI">
       <Version>2.5.2</Version>
     </PackageReference>
     <PackageReference Include="Speckle.Newtonsoft.Json">
       <Version>12.0.3.1</Version>
     </PackageReference>
     <PackageReference Include="Speckle.Objects">
-      <Version>2.5.2</Version>
-    </PackageReference>
-    <PackageReference Include="Speckle.Transports.Disk">
       <Version>2.5.2</Version>
     </PackageReference>
     <PackageReference Include="SQLite.Interop.dll">

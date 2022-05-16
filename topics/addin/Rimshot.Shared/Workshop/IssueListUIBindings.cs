@@ -1,33 +1,29 @@
-﻿using System;
+﻿using Autodesk.Navisworks.Api;
+using Autodesk.Navisworks.Api.DocumentParts;
+using CefSharp;
+using Speckle.Core.Api;
+using Speckle.Core.Credentials;
+using Speckle.Core.Models;
+using Speckle.Core.Transports;
+using Speckle.Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
-using CefSharp;
-using CefSharp.Wpf;
-using Newtonsoft.Json;
-using Navis = Autodesk.Navisworks.Api.Application;
-using System.IO;
-using Autodesk.Navisworks.Api;
+using Color = System.Drawing.Color;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
+using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
-using Autodesk.Navisworks.Api.DocumentParts;
-
-using Speckle.Core.Models;
-using Speckle.Core.Credentials;
-using Speckle.Core.Transports;
-using Speckle.Core.Api;
-using System.Reflection;
-using System.Drawing;
-using Color = System.Drawing.Color;
 
 namespace Rimshot.Shared.Workshop {
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "http://192.168.86.42:8080/issues";
+    const string rimshotUrl = "https://rimshot.app/issues";
 #else
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
@@ -81,7 +77,7 @@ namespace Rimshot.Shared.Workshop {
       PropertyInfo branchProp = payloadType.GetProperty( "branch" );
       PropertyInfo issueProp = payloadType.GetProperty( "issueId" );
 
-      var commitPayload = ( dynamic )payload;
+      dynamic commitPayload = ( dynamic )payload;
 
       string branchName = commitPayload.branch;
       string streamId = commitPayload.stream;
@@ -117,9 +113,9 @@ namespace Rimshot.Shared.Workshop {
 
       ModelItemCollection selectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
 
-      var translatedElements = new List<Base>();
+      List<Base> translatedElements = new List<Base>();
 
-      var Elements = new List<Base>();
+      List<Base> Elements = new List<Base>();
 
       foreach ( ModelItem element in selectedItems ) {
         Elements.Add( TranslateElement( element ) );
@@ -131,10 +127,10 @@ namespace Rimshot.Shared.Workshop {
       string[] stringseparators = new string[] { "/" };
       myCommit[ "Issue Number" ] = branchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
       myCommit[ "applicationId" ] = issueId;
-      var transport = new ServerTransport( defaultAccount, streamId );
-      var hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
+      ServerTransport transport = new ServerTransport( defaultAccount, streamId );
+      string hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
 
-      var commitId = client.CommitCreate( new CommitCreateInput() {
+      string commitId = client.CommitCreate( new CommitCreateInput() {
         branchName = branchName,
         message = "Rimshot issue commit.",
         objectId = hash,
@@ -142,8 +138,8 @@ namespace Rimshot.Shared.Workshop {
         sourceApplication = "Rimshot"
       } ).Result;
 
-      var commitObject = client.CommitGet( streamId, commitId ).Result;
-      var referencedObject = commitObject.referencedObject;
+      Commit commitObject = client.CommitGet( streamId, commitId ).Result;
+      string referencedObject = commitObject.referencedObject;
 
       NotifyUI( "commit_sent", $"{{\"commit\":\"{commitId}\",\"issueId\":\"{issueId}\",\"stream\":\"{streamId}\",\"object\":\"{referencedObject}\"}}" );
 
@@ -154,14 +150,11 @@ namespace Rimshot.Shared.Workshop {
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
 
-      List<Base> geometry = new List<Base>();
-
       if ( element.HasGeometry ) {
-
         elementBase[ "displayValue" ] = TranslateGeometry( element );
       }
 
-      var children = new List<Base>();
+      List<Base> children = new List<Base>();
 
       if ( element.Descendants.Count() > 0 ) {
         foreach ( ModelItem child in element.Descendants ) {
@@ -225,59 +218,59 @@ namespace Rimshot.Shared.Workshop {
       Base geomBase = new Base();
 
       NavisGeometry navisGeometry = new NavisGeometry( geom );
-      List<Shared.CallbackGeomListener> cb = navisGeometry.getFragments();
+      List<Shared.CallbackGeomListener> cb = navisGeometry.GetFragments();
 
 
       List<Objects.Geometry.Mesh> baseMeshes = new List<Objects.Geometry.Mesh>();
 
-      List<Mesh> meshes = new List<Mesh>();
+      List<NavisMesh> meshes = new List<NavisMesh>();
 
-      var rand = new Random();
+      Random rand = new Random();
 
 
-      foreach ( var callback in cb ) {
-        var coords = callback.Coords;
-        var mesheCount = coords.Count / 131004;
-        var mesheCountRem = coords.Count % 131004;
+      foreach ( Shared.CallbackGeomListener callback in cb ) {
+        List<float> coords = callback.Coords;
+        int mesheCount = coords.Count / 131004;
+        int mesheCountRem = coords.Count % 131004;
 
         for ( int j = 0; j < mesheCount; j++ ) {
-          var triangles = new List<Triangle>();
+          List<NavisTriangle> triangles = new List<NavisTriangle>();
 
           for ( int i = 0; i < 131004; i += 9 ) {
-            var vertex1 = new Vertex( coords[ i + ( 131004 * j ) ], coords[ i + ( 131004 * j ) + 1 ], coords[ i + ( 131004 * j ) + 2 ] );
-            var vertex2 = new Vertex( coords[ i + ( 131004 * j ) + 3 ], coords[ i + ( 131004 * j ) + 4 ], coords[ i + ( 131004 * j ) + 5 ] );
-            var vertex3 = new Vertex( coords[ i + ( 131004 * j ) + 6 ], coords[ i + ( 131004 * j ) + 7 ], coords[ i + ( 131004 * j ) + 8 ] );
-            var triangle = new Triangle( vertex1, vertex2, vertex3 );
+            NavisVertex vertex1 = new NavisVertex( coords[ i + 131004 * j ], coords[ i + 131004 * j + 1 ], coords[ i + 131004 * j + 2 ] );
+            NavisVertex vertex2 = new NavisVertex( coords[ i + 131004 * j + 3 ], coords[ i + 131004 * j + 4 ], coords[ i + 131004 * j + 5 ] );
+            NavisVertex vertex3 = new NavisVertex( coords[ i + 131004 * j + 6 ], coords[ i + 131004 * j + 7 ], coords[ i + 131004 * j + 8 ] );
+            NavisTriangle triangle = new NavisTriangle( vertex1, vertex2, vertex3 );
             triangles.Add( triangle );
           }
 
 
           if ( triangles.Count > 0 ) {
-            var mesh = new Mesh( triangles );
+            NavisMesh mesh = new NavisMesh( triangles );
             meshes.Add( mesh );
           }
 
         }
-        var triangles2 = new List<Triangle>();
+        List<NavisTriangle> triangles2 = new List<NavisTriangle>();
         for ( int i = mesheCount * 131004; i < mesheCount * 131004 + mesheCountRem; i += 9 ) {
-          var vertex1 = new Vertex( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
-          var vertex2 = new Vertex( coords[ i + 3 ], coords[ i + 4 ], coords[ i + 5 ] );
-          var vertex3 = new Vertex( coords[ i + 6 ], coords[ i + 7 ], coords[ i + 8 ] );
-          var triangle = new Triangle( vertex1, vertex2, vertex3 );
+          NavisVertex vertex1 = new NavisVertex( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
+          NavisVertex vertex2 = new NavisVertex( coords[ i + 3 ], coords[ i + 4 ], coords[ i + 5 ] );
+          NavisVertex vertex3 = new NavisVertex( coords[ i + 6 ], coords[ i + 7 ], coords[ i + 8 ] );
+          NavisTriangle triangle = new NavisTriangle( vertex1, vertex2, vertex3 );
           triangles2.Add( triangle );
         }
         if ( triangles2.Count > 0 ) {
-          var mesh2 = new Mesh( triangles2 );
+          NavisMesh mesh2 = new NavisMesh( triangles2 );
           meshes.Add( mesh2 );
         }
       }
 
 
-      foreach ( Mesh m in meshes ) {
+      foreach ( NavisMesh m in meshes ) {
 
 
 
-        Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( m.vertices.Select( Convert.ToDouble ).ToList(), m.Indices );
+        Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( m.Vertices.Select( Convert.ToDouble ).ToList(), m.Indices );
 
         baseMesh[ "renderMaterial" ] = TranslateMaterial( geom );
 
@@ -302,9 +295,8 @@ namespace Rimshot.Shared.Workshop {
     }
 
     public Task<Branch> CreateBranch ( Client client, string streamId, string branchName, string description ) {
-
       try {
-        var branchId = client.BranchCreate( new BranchCreateInput() {
+        Task<string> branchId = client.BranchCreate( new BranchCreateInput() {
           streamId = streamId,
           name = branchName,
           description = description
@@ -313,10 +305,9 @@ namespace Rimshot.Shared.Workshop {
         Console.WriteLine( $"Error: {e.Message}" );
       }
 
-      var branch = client.BranchGet( streamId, branchName );
+      Task<Branch> branch = client.BranchGet( streamId, branchName );
 
       return branch;
-
     }
 
     private void SendIssueView () {
@@ -339,7 +330,10 @@ namespace Rimshot.Shared.Workshop {
       string imageFolder = Path.Combine( this._tempFolder, image.guid.ToString() );
       string snapshot = Path.Combine( imageFolder, image.name + ".png" );
 
-      if ( !Directory.Exists( this._tempFolder ) ) Directory.CreateDirectory( this._tempFolder );
+      if ( !Directory.Exists( this._tempFolder ) ) {
+        Directory.CreateDirectory( this._tempFolder );
+      }
+
       _ = Directory.CreateDirectory( imageFolder );
 
       foreach ( ComApi.InwOaProperty opt in options.Properties() ) {
@@ -360,14 +354,14 @@ namespace Rimshot.Shared.Workshop {
       try {
         stream = new MemoryStream();
 
-        System.Drawing.Bitmap oBitmap = new System.Drawing.Bitmap( snapshot );
-        System.Drawing.Bitmap tBitmap = new System.Drawing.Bitmap( snapshot );
+        Bitmap oBitmap = new Bitmap( snapshot );
+        Bitmap tBitmap = new Bitmap( snapshot );
 
         oBitmap.Save( stream, System.Drawing.Imaging.ImageFormat.Jpeg );
         imageBytes = stream.ToArray();
         image.image = Convert.ToBase64String( imageBytes );
 
-        var viewpoint = new ImageViewpoint( oNewViewPt1 );
+        ImageViewpoint viewpoint = new ImageViewpoint( oNewViewPt1 );
 
       } catch ( Exception err ) {
         _ = MessageBox.Show( err.Message );
@@ -379,84 +373,60 @@ namespace Rimshot.Shared.Workshop {
     }
   }
 
-
-
   public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB {
-    public List<float> Coords { get; set; }
-    public float[] matrix { get; set; }
+    public List<decimal> Coords { get; set; }
+    public decimal[] Matrix { get; set; }
     public CallbackGeomListener () {
-      Coords = new List<float>();
+      Coords = new List<decimal>();
     }
-    public void Line ( ComApi.InwSimpleVertex v1,
-                     ComApi.InwSimpleVertex v2 ) {
+    public void Line ( ComApi.InwSimpleVertex v1, ComApi.InwSimpleVertex v2 ) { }
+    public void Point ( ComApi.InwSimpleVertex v1 ) { }
+    public void SnapPoint ( ComApi.InwSimpleVertex v1 ) { }
 
-    }
-    public void Point ( ComApi.InwSimpleVertex v1 ) {
+    public void Triangle ( ComApi.InwSimpleVertex v1, ComApi.InwSimpleVertex v2, ComApi.InwSimpleVertex v3 ) {
 
-    }
-    public void SnapPoint ( ComApi.InwSimpleVertex v1 ) {
+      Array array_v1 = ( Array )v1.coord;
+      decimal v1_x = ( decimal )array_v1.GetValue( 1 );
+      decimal v1_y = ( decimal )array_v1.GetValue( 2 );
+      decimal v1_z = ( decimal )array_v1.GetValue( 3 );
 
-    }
+      Array array_v2 = ( Array )v2.coord;
+      decimal v2_x = ( decimal )array_v2.GetValue( 1 );
+      decimal v2_y = ( decimal )array_v2.GetValue( 2 );
+      decimal v2_z = ( decimal )array_v2.GetValue( 3 );
 
-    public void Triangle ( ComApi.InwSimpleVertex v1,
-                         ComApi.InwSimpleVertex v2,
-                         ComApi.InwSimpleVertex v3 ) {
-
-
-
-      Array array_v1 = ( Array )( object )v1.coord;
-      float v1_x = ( float )( array_v1.GetValue( 1 ) );
-      float v1_y = ( float )( array_v1.GetValue( 2 ) );
-      float v1_z = ( float )( array_v1.GetValue( 3 ) );
-
-      Array array_v2 = ( Array )( object )v2.coord;
-      float v2_x = ( float )( array_v2.GetValue( 1 ) );
-      float v2_y = ( float )( array_v2.GetValue( 2 ) );
-      float v2_z = ( float )( array_v2.GetValue( 3 ) );
-
-      Array array_v3 = ( Array )( object )v3.coord;
-      float v3_x = ( float )( array_v3.GetValue( 1 ) );
-      float v3_y = ( float )( array_v3.GetValue( 2 ) );
-      float v3_z = ( float )( array_v3.GetValue( 3 ) );
+      Array array_v3 = ( Array )v3.coord;
+      decimal v3_x = ( decimal )array_v3.GetValue( 1 );
+      decimal v3_y = ( decimal )array_v3.GetValue( 2 );
+      decimal v3_z = ( decimal )array_v3.GetValue( 3 );
 
       //Matrix
+      decimal w1 = this.Matrix[ 3 ] * v1_x + this.Matrix[ 7 ] * v1_y + this.Matrix[ 11 ] * v1_z + this.Matrix[ 15 ];
+      decimal v1__x = ( this.Matrix[ 0 ] * v1_x + this.Matrix[ 4 ] * v1_y + this.Matrix[ 8 ] * v1_z + this.Matrix[ 12 ] ) / w1;
+      decimal v1__y = ( this.Matrix[ 1 ] * v1_x + this.Matrix[ 5 ] * v1_y + this.Matrix[ 9 ] * v1_z + this.Matrix[ 13 ] ) / w1;
+      decimal v1__z = ( this.Matrix[ 2 ] * v1_x + this.Matrix[ 6 ] * v1_y + this.Matrix[ 10 ] * v1_z + this.Matrix[ 14 ] ) / w1;
 
-      float w1 = matrix[ 3 ] * v1_x + matrix[ 7 ] * v1_y + matrix[ 11 ] * v1_z + matrix[ 15 ];
+      decimal w2 = Matrix[ 3 ] * v2_x + Matrix[ 7 ] * v2_y + Matrix[ 11 ] * v2_z + Matrix[ 15 ];
+      decimal v2__x = ( Matrix[ 0 ] * v2_x + Matrix[ 4 ] * v2_y + Matrix[ 8 ] * v2_z + Matrix[ 12 ] ) / w2;
+      decimal v2__y = ( Matrix[ 1 ] * v2_x + Matrix[ 5 ] * v2_y + Matrix[ 9 ] * v2_z + Matrix[ 13 ] ) / w2;
+      decimal v2__z = ( Matrix[ 2 ] * v2_x + Matrix[ 6 ] * v2_y + Matrix[ 10 ] * v2_z + Matrix[ 14 ] ) / w2;
 
-      var v1__x = ( matrix[ 0 ] * v1_x + matrix[ 4 ] * v1_y + matrix[ 8 ] * v1_z + matrix[ 12 ] ) / w1;
-      var v1__y = ( matrix[ 1 ] * v1_x + matrix[ 5 ] * v1_y + matrix[ 9 ] * v1_z + matrix[ 13 ] ) / w1;
-      var v1__z = ( matrix[ 2 ] * v1_x + matrix[ 6 ] * v1_y + matrix[ 10 ] * v1_z + matrix[ 14 ] ) / w1;
+      decimal w3 = Matrix[ 3 ] * v3_x + Matrix[ 7 ] * v3_y + Matrix[ 11 ] * v3_z + Matrix[ 15 ];
+      decimal v3__x = ( this.Matrix[ 0 ] * v3_x + Matrix[ 4 ] * v3_y + Matrix[ 8 ] * v3_z + Matrix[ 12 ] ) / w3;
+      decimal v3__y = ( Matrix[ 1 ] * v3_x + Matrix[ 5 ] * v3_y + Matrix[ 9 ] * v3_z + Matrix[ 13 ] ) / w3;
+      decimal v3__z = ( Matrix[ 2 ] * v3_x + Matrix[ 6 ] * v3_y + Matrix[ 10 ] * v3_z + Matrix[ 14 ] ) / w3;
 
+      Coords.Add( ( decimal )v1__x );
+      Coords.Add( ( decimal )v1__y );
+      Coords.Add( ( decimal )v1__z );
 
-      float w2 = matrix[ 3 ] * v2_x + matrix[ 7 ] * v2_y + matrix[ 11 ] * v2_z + matrix[ 15 ];
+      Coords.Add( ( decimal )v2__x );
+      Coords.Add( ( decimal )v2__y );
+      Coords.Add( ( decimal )v2__z );
 
-      var v2__x = ( matrix[ 0 ] * v2_x + matrix[ 4 ] * v2_y + matrix[ 8 ] * v2_z + matrix[ 12 ] ) / w2;
-      var v2__y = ( matrix[ 1 ] * v2_x + matrix[ 5 ] * v2_y + matrix[ 9 ] * v2_z + matrix[ 13 ] ) / w2;
-      var v2__z = ( matrix[ 2 ] * v2_x + matrix[ 6 ] * v2_y + matrix[ 10 ] * v2_z + matrix[ 14 ] ) / w2;
-
-      float w3 = matrix[ 3 ] * v3_x + matrix[ 7 ] * v3_y + matrix[ 11 ] * v3_z + matrix[ 15 ];
-
-      var v3__x = ( matrix[ 0 ] * v3_x + matrix[ 4 ] * v3_y + matrix[ 8 ] * v3_z + matrix[ 12 ] ) / w3;
-      var v3__y = ( matrix[ 1 ] * v3_x + matrix[ 5 ] * v3_y + matrix[ 9 ] * v3_z + matrix[ 13 ] ) / w3;
-      var v3__z = ( matrix[ 2 ] * v3_x + matrix[ 6 ] * v3_y + matrix[ 10 ] * v3_z + matrix[ 14 ] ) / w3;
-
-
-
-      Coords.Add( ( float )v1__x );
-      Coords.Add( ( float )v1__y );
-      Coords.Add( ( float )v1__z );
-
-      Coords.Add( ( float )v2__x );
-      Coords.Add( ( float )v2__y );
-      Coords.Add( ( float )v2__z );
-
-      Coords.Add( ( float )v3__x );
-      Coords.Add( ( float )v3__y );
-      Coords.Add( ( float )v3__z );
+      Coords.Add( ( decimal )v3__x );
+      Coords.Add( ( decimal )v3__y );
+      Coords.Add( ( decimal )v3__z );
     }
-
   }
-
-
-
 }
