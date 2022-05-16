@@ -1,31 +1,26 @@
-﻿using System;
+﻿using Autodesk.Navisworks.Api;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using Autodesk.Navisworks.Api;
 
-namespace Rimshot
-{
+namespace Rimshot {
 
   /// <summary>
   /// Jira is the main datacontext, it just contains a IssuesBCFCollection, but I still follow this structure in case 
   /// of future developement and uniformation to other Jira/BCF plugins
   /// </summary>
-  public class Jira : INotifyPropertyChanged
-  {
+  public class Jira : INotifyPropertyChanged {
 
 
     public ObservableCollection<IssueBCF> issuesBCFCollection;
 
-    public ObservableCollection<IssueBCF> IssuesBCFCollection
-    {
-      get
-      {
+    public ObservableCollection<IssueBCF> IssuesBCFCollection {
+      get {
         return issuesBCFCollection;
       }
-      set
-      {
+      set {
         issuesBCFCollection = value;
-        NotifyPropertyChanged("IssuesBCFCollection");
+        NotifyPropertyChanged( "IssuesBCFCollection" );
       }
     }
 
@@ -39,11 +34,9 @@ namespace Rimshot
     /// Changed Property Handler
     /// </summary>
     /// <param name="info"></param>
-    public void NotifyPropertyChanged(String info)
-    {
-      if (PropertyChanged != null)
-      {
-        PropertyChanged(this, new PropertyChangedEventArgs(info));
+    public void NotifyPropertyChanged ( String info ) {
+      if ( PropertyChanged != null ) {
+        PropertyChanged( this, new PropertyChangedEventArgs( info ) );
       }
     }
   }
@@ -52,10 +45,8 @@ namespace Rimshot
   /// class the defines the items inside the listview. it just contains a SavedViewpoint, but I still follow this structure in case 
   /// of future developement and uniformation to other Jira/BCF plugins
   /// </summary>
-  public class IssueBCF
-  {
-    public SavedViewpoint viewpoint
-    {
+  public class IssueBCF {
+    public SavedViewpoint viewpoint {
       get; set;
     }
 
@@ -69,11 +60,9 @@ namespace Rimshot
     /// Changed Property Handler
     /// </summary>
     /// <param name="info"></param>
-    public void NotifyPropertyChanged(String info)
-    {
-      if (PropertyChanged != null)
-      {
-        PropertyChanged(this, new PropertyChangedEventArgs(info));
+    public void NotifyPropertyChanged ( String info ) {
+      if ( PropertyChanged != null ) {
+        PropertyChanged( this, new PropertyChangedEventArgs( info ) );
       }
     }
   }

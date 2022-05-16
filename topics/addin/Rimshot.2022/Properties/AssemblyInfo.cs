@@ -1,22 +1,21 @@
 ﻿using System.Reflection;
-using System.Resources;
 using System.Runtime.InteropServices;
 using System.Windows;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Rimshot2022")]
-[assembly: AssemblyDescription("Navisworks workflow tools to support the Rimshot Analysis Platform")]
-[assembly: AssemblyConfiguration("Internal")]
-[assembly: AssemblyCompany("Rimshot")]
-[assembly: AssemblyProduct("Rimshot2022")]
-[assembly: AssemblyCopyright("Copyright ©2021")]
+[assembly: AssemblyTitle( "Rimshot2022" )]
+[assembly: AssemblyDescription( "Navisworks workflow tools to support the Rimshot Analysis Platform" )]
+[assembly: AssemblyConfiguration( "Internal" )]
+[assembly: AssemblyCompany( "Rimshot" )]
+[assembly: AssemblyProduct( "Rimshot2022" )]
+[assembly: AssemblyCopyright( "Copyright ©2021" )]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
+[assembly: ComVisible( false )]
 
 //In order to begin building localizable applications, set
 //<UICulture>CultureYouAreCodingWith</UICulture> in your .csproj file
@@ -48,5 +47,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2022.0.0.0")]
-[assembly: AssemblyFileVersion("2022.0.0.0")]
+[assembly: AssemblyVersion( "2022.0.0.0" )]
+[assembly: AssemblyFileVersion( "2022.0.0.0" )]

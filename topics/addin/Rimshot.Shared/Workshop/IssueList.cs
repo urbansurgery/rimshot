@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
-using System.Text;
+﻿using Autodesk.Navisworks.Api.Plugins;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
-using Autodesk.Navisworks.Api;
-using Autodesk.Navisworks.Api.Plugins;
-using Newtonsoft.Json;
-using app = Autodesk.Navisworks.Api.Application;
 
 namespace Rimshot.Shared.Workshop.IssueList {
 

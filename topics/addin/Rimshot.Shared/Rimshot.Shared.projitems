@@ -9,17 +9,6 @@
     <Import_RootNamespace>Rimshot.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Analysis\ClashElements.xaml.cs">
-      <DependentUpon>ClashElements.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)Analysis\control_SelectedClashes.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Analysis\control_SelectedClashes.Designer.cs">
-      <DependentUpon>control_SelectedClashes.cs</DependentUpon>
-    </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)BCF\ExportBCF.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)BCF\ExportBCF.xaml.cs">
-      <DependentUpon>ExportBCF.xaml</DependentUpon>
-    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)Collections\ObservableCollections.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\IssueConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\TreeConverter.cs" />
@@ -39,6 +28,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Workshop\IssueListUIBindings.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Images\logo.ico" />
+    <Content Include="$(MSBuildThisFileDirectory)Images\logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo16.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -49,6 +42,15 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo32.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\rimshot.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\rimshot16.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\rimshot32.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Utilities\Ionic.Zip.xml" />
@@ -66,18 +68,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)Analysis\ClashElements.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="$(MSBuildThisFileDirectory)BCF\BCFListView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="$(MSBuildThisFileDirectory)BCF\ExportBCF.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="$(MSBuildThisFileDirectory)Workshop\IssueListPane.xaml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <SubType>Designer</SubType>
@@ -85,6 +75,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)BCF\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Analysis\" />
   </ItemGroup>
 </Project>

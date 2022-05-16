@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.ComponentModel;
-using System.Data;
-using System.Windows.Forms;
-using Autodesk.Navisworks.Api;
-using Autodesk.Navisworks.Api.Data;
-using Autodesk.Navisworks.Api.DocumentParts;
-using Autodesk.Navisworks.Api.Plugins;
+﻿using Autodesk.Navisworks.Api.Plugins;
 using Autodesk.Windows;
+using System.Text;
+using System.Windows.Forms;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
 namespace Rimshot.Shared {
@@ -22,13 +15,13 @@ namespace Rimshot.Shared {
 
   [Command( Tools.IssueList.Command,
              CallCanExecute = CallCanExecute.DocumentNotClear,
-             Icon = "logo16.png",
-             LargeIcon = "logo32.png",
+             Icon = "rimshot16.ico",
+             LargeIcon = "rimshot32.ico",
              Shortcut = "Ctrl+Shift+O",
              ShortcutWindowTypes = "",
              ToolTip = "Show Issue List",
              ExtendedToolTip = "Show Issue List",
-             DisplayName = "Sp**kle"
+             DisplayName = "Rimshot"
              )]
 
 

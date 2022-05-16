@@ -9,17 +9,17 @@ namespace Rimshot {
 
     #region Event Handlers
 
-    private void EndProgress(Progress p = null) {
+    private void EndProgress ( Progress p = null ) {
       progressIsCancelled = false;
 
-      if (p != null && !p.IsDisposed) {
+      if ( p != null && !p.IsDisposed ) {
         p.Dispose();
       }
     }
 
-    public void HandleEnd(object sender, ProgressEndedEventArgs e) {
+    public void HandleEnd ( object sender, ProgressEndedEventArgs e ) {
 
-      if (sender != null) {
+      if ( sender != null ) {
         ProgressEnd();
       }
 
@@ -27,16 +27,16 @@ namespace Rimshot {
       ProgressEnd();
     }
 
-    public void HandleSubOpEnd(object sender, ProgressSubOperationEndedEventArgs e) {
+    public void HandleSubOpEnd ( object sender, ProgressSubOperationEndedEventArgs e ) {
       Progress progress = e.Progress;
-      if (progress.IsCanceled && !progressIsCancelled) {
+      if ( progress.IsCanceled && !progressIsCancelled ) {
         progressIsCancelled = true;
         //MessageBox.Show(" Cancelled.");
       }
     }
 
-    public void ProgressEnd(Progress p = null) {
-      EndProgress(p);
+    public void ProgressEnd ( Progress p = null ) {
+      EndProgress( p );
       NavisworksApp.ProgressSubOperationEnded -= HandleSubOpEnd;
       NavisworksApp.ProgressEnded -= HandleEnd;
     }
