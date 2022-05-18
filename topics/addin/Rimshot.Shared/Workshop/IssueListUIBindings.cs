@@ -9,6 +9,7 @@ using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -71,6 +72,8 @@ namespace Rimshot.Shared.Workshop {
 
     private async void CommitSelectedObjectsToSpeckle ( object payload ) {
 
+      Console.WriteLine( "Commit Selection commenced." );
+
       Type payloadType = payload.GetType();
 
       PropertyInfo streamProp = payloadType.GetProperty( "stream" );
@@ -105,7 +108,7 @@ namespace Rimshot.Shared.Workshop {
       branch = client.BranchGet( streamId, branchName, 1 ).Result;
 
       if ( branch != null ) {
-        NotifyUI( "branch_updated", new { branch = branch.name, issueId = issueId } );
+        NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
       }
 
       Document activeDocument = NavisworksApp.ActiveDocument;
@@ -145,10 +148,11 @@ namespace Rimshot.Shared.Workshop {
       Commit commitObject = client.CommitGet( streamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
-      NotifyUI( "commit_sent", new { commit = commitId, issueId = issueId, stream = streamId, objectId = referencedObject } );
+      NotifyUI( "commit_sent", new { commit = commitId, issueId, stream = streamId, objectId = referencedObject } );
 
       client.Dispose();
     }
+
 
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
@@ -182,7 +186,15 @@ namespace Rimshot.Shared.Workshop {
         DataPropertyCollection properties = propCat.Properties;
 
         foreach ( DataProperty prop in properties ) {
-          string key = prop.CombinedName.ToString();
+
+          string key;
+          try {
+
+            key = prop.CombinedName.ToString();
+          } catch ( Exception err ) {
+            Console.WriteLine( $"Property Name not converted. {err.Message}" );
+            break;
+          }
 
           dynamic propValue = null;
 
@@ -272,7 +284,9 @@ namespace Rimshot.Shared.Workshop {
         Convert.ToInt32( geom.Geometry.OriginalColor.G * 255 ),
         Convert.ToInt32( geom.Geometry.OriginalColor.B * 255 ) );
 
-      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( 1 - geom.Geometry.OriginalTransparency, 0, 1, original );
+      Color dark = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
+
+      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( 1 - geom.Geometry.OriginalTransparency, 0, 1, original, dark );
 
       return r;
     }
