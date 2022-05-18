@@ -9,6 +9,7 @@ using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -28,6 +29,7 @@ namespace Rimshot.Shared.Workshop {
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
     public const string Url = rimshotUrl;
+    private const int V = 131004;
     private string _tempFolder = "";
 
 
@@ -70,6 +72,8 @@ namespace Rimshot.Shared.Workshop {
 
     private async void CommitSelectedObjectsToSpeckle ( object payload ) {
 
+      Console.WriteLine( "Commit Selection commenced." );
+
       Type payloadType = payload.GetType();
 
       PropertyInfo streamProp = payloadType.GetProperty( "stream" );
@@ -98,14 +102,13 @@ namespace Rimshot.Shared.Workshop {
           branch = await CreateBranch( client, streamId, branchName, description );
         }
       } catch ( Exception e ) {
-        Console.WriteLine( $"Error: {e.Message}" );
+        NotifyUI( "error", new { message = e.Message } );
       }
 
       branch = client.BranchGet( streamId, branchName, 1 ).Result;
 
       if ( branch != null ) {
-        Console.WriteLine( $"Branch {branch.name} established" );
-        NotifyUI( "branch_updated", $"{{\"branch\":\"{branch.name}\",\"issueId\":\"{issueId}\"}}" );
+        NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
       }
 
       Document activeDocument = NavisworksApp.ActiveDocument;
@@ -117,7 +120,11 @@ namespace Rimshot.Shared.Workshop {
 
       List<Base> Elements = new List<Base>();
 
-      foreach ( ModelItem element in selectedItems ) {
+      int elementCount = selectedItems.Count;
+
+      for ( int e = 0; e < elementCount; e++ ) {
+        ModelItem element = selectedItems[ e ];
+        NotifyUI( "elements", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
         Elements.Add( TranslateElement( element ) );
       }
 
@@ -141,23 +148,30 @@ namespace Rimshot.Shared.Workshop {
       Commit commitObject = client.CommitGet( streamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
-      NotifyUI( "commit_sent", $"{{\"commit\":\"{commitId}\",\"issueId\":\"{issueId}\",\"stream\":\"{streamId}\",\"object\":\"{referencedObject}\"}}" );
+      NotifyUI( "commit_sent", new { commit = commitId, issueId, stream = streamId, objectId = referencedObject } );
 
       client.Dispose();
-
     }
+
 
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
 
-      if ( element.HasGeometry ) {
-        elementBase[ "displayValue" ] = TranslateGeometry( element );
+      int descendantsCount = element.Descendants.Count();
+
+      if ( element.HasGeometry && descendantsCount == 0 ) {
+        List<Objects.Geometry.Mesh> geometryToSpeckle = TranslateGeometry( element );
+        if ( geometryToSpeckle.Count > 0 ) {
+          elementBase[ "displayValue" ] = geometryToSpeckle;
+        }
       }
 
       List<Base> children = new List<Base>();
 
-      if ( element.Descendants.Count() > 0 ) {
-        foreach ( ModelItem child in element.Descendants ) {
+      if ( descendantsCount > 0 ) {
+        for ( int c = 0; c < descendantsCount; c++ ) {
+          ModelItem child = element.Descendants.ElementAt( c );
+          NotifyUI( "nested", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
           children.Add( TranslateElement( child ) );
         }
         elementBase[ "@Elements" ] = children;
@@ -172,7 +186,15 @@ namespace Rimshot.Shared.Workshop {
         DataPropertyCollection properties = propCat.Properties;
 
         foreach ( DataProperty prop in properties ) {
-          string key = prop.CombinedName.ToString();
+
+          string key;
+          try {
+
+            key = prop.CombinedName.ToString();
+          } catch ( Exception err ) {
+            Console.WriteLine( $"Property Name not converted. {err.Message}" );
+            break;
+          }
 
           dynamic propValue = null;
 
@@ -215,71 +237,44 @@ namespace Rimshot.Shared.Workshop {
 
     public List<Objects.Geometry.Mesh> TranslateGeometry ( ModelItem geom ) {
 
-      Base geomBase = new Base();
-
       NavisGeometry navisGeometry = new NavisGeometry( geom );
       List<Shared.CallbackGeomListener> cb = navisGeometry.GetFragments();
 
-
       List<Objects.Geometry.Mesh> baseMeshes = new List<Objects.Geometry.Mesh>();
 
-      List<NavisMesh> meshes = new List<NavisMesh>();
-
-      Random rand = new Random();
-
-
       foreach ( Shared.CallbackGeomListener callback in cb ) {
-        List<float> coords = callback.Coords;
-        int mesheCount = coords.Count / 131004;
-        int mesheCountRem = coords.Count % 131004;
 
-        for ( int j = 0; j < mesheCount; j++ ) {
-          List<NavisTriangle> triangles = new List<NavisTriangle>();
+        List<double> vertices = new List<double>();
+        List<int> faces = new List<int>();
+        List<NavisTriangle> Triangles = callback.Triangles;
+        int triangleCount = Triangles.Count;
 
-          for ( int i = 0; i < 131004; i += 9 ) {
-            NavisVertex vertex1 = new NavisVertex( coords[ i + 131004 * j ], coords[ i + 131004 * j + 1 ], coords[ i + 131004 * j + 2 ] );
-            NavisVertex vertex2 = new NavisVertex( coords[ i + 131004 * j + 3 ], coords[ i + 131004 * j + 4 ], coords[ i + 131004 * j + 5 ] );
-            NavisVertex vertex3 = new NavisVertex( coords[ i + 131004 * j + 6 ], coords[ i + 131004 * j + 7 ], coords[ i + 131004 * j + 8 ] );
-            NavisTriangle triangle = new NavisTriangle( vertex1, vertex2, vertex3 );
-            triangles.Add( triangle );
+        if ( triangleCount > 0 ) {
+          for ( int t = 0; t < triangleCount; t += 1 ) {
+
+            NotifyUI( "triangles", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+
+            double scale = 0.001;
+
+            vertices.AddRange( new List<double>() { Triangles[ t ].Vertex1.X * scale, Triangles[ t ].Vertex1.Y * scale, Triangles[ t ].Vertex1.Z * scale } );
+            vertices.AddRange( new List<double>() { Triangles[ t ].Vertex2.X * scale, Triangles[ t ].Vertex2.Y * scale, Triangles[ t ].Vertex2.Z * scale } );
+            vertices.AddRange( new List<double>() { Triangles[ t ].Vertex3.X * scale, Triangles[ t ].Vertex3.Y * scale, Triangles[ t ].Vertex3.Z * scale } );
+
+            // TODO: Move this back to Geometry.cs
+            faces.Add( 0 );
+            faces.Add( t * 3 );
+            faces.Add( t * 3 + 1 );
+            faces.Add( t * 3 + 2 );
           }
 
 
-          if ( triangles.Count > 0 ) {
-            NavisMesh mesh = new NavisMesh( triangles );
-            meshes.Add( mesh );
-          }
-
-        }
-        List<NavisTriangle> triangles2 = new List<NavisTriangle>();
-        for ( int i = mesheCount * 131004; i < mesheCount * 131004 + mesheCountRem; i += 9 ) {
-          NavisVertex vertex1 = new NavisVertex( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
-          NavisVertex vertex2 = new NavisVertex( coords[ i + 3 ], coords[ i + 4 ], coords[ i + 5 ] );
-          NavisVertex vertex3 = new NavisVertex( coords[ i + 6 ], coords[ i + 7 ], coords[ i + 8 ] );
-          NavisTriangle triangle = new NavisTriangle( vertex1, vertex2, vertex3 );
-          triangles2.Add( triangle );
-        }
-        if ( triangles2.Count > 0 ) {
-          NavisMesh mesh2 = new NavisMesh( triangles2 );
-          meshes.Add( mesh2 );
+          Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( vertices, faces );
+          baseMesh[ "renderMaterial" ] = TranslateMaterial( geom );
+          baseMeshes.Add( baseMesh );
         }
       }
-
-
-      foreach ( NavisMesh m in meshes ) {
-
-
-
-        Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( m.Vertices.Select( Convert.ToDouble ).ToList(), m.Indices );
-
-        baseMesh[ "renderMaterial" ] = TranslateMaterial( geom );
-
-        baseMeshes.Add( baseMesh );
-      }
-
 
       return baseMeshes;
-
     }
 
     public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
@@ -289,7 +284,9 @@ namespace Rimshot.Shared.Workshop {
         Convert.ToInt32( geom.Geometry.OriginalColor.G * 255 ),
         Convert.ToInt32( geom.Geometry.OriginalColor.B * 255 ) );
 
-      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( geom.Geometry.OriginalTransparency, 0, 1, original );
+      Color dark = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
+
+      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( 1 - geom.Geometry.OriginalTransparency, 0, 1, original, dark );
 
       return r;
     }
@@ -302,7 +299,7 @@ namespace Rimshot.Shared.Workshop {
           description = description
         } );
       } catch ( Exception e ) {
-        Console.WriteLine( $"Error: {e.Message}" );
+        NotifyUI( "error", new { message = e.Message } );
       }
 
       Task<Branch> branch = client.BranchGet( streamId, branchName );
