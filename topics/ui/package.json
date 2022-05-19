@@ -1,17 +1,17 @@
 {
   "dependencies": {
-    "core-js": "^3.22.5",
-    "dayjs": "^1.11.2",
-    "register-service-worker": "^1.7.2",
-    "vue": "^2.6.14",
-    "vue-router": "^3.5.3",
-    "vuetify": "^2.6.5",
-    "vuex": "^3.6.2",
-    "vuexfire": "^3.2.5",
+    "core-js": "3.22.5",
+    "dayjs": "1.11.2",
+    "register-service-worker": "1.7.2",
+    "vue": "2.6.14",
+    "vue-router": "3.5.3",
+    "vuetify": "2.6.5",
+    "vuex": "3.6.2",
+    "vuexfire": "3.2.5",
     "firebase": "8.10.1",
-    "v-hotkey": "^0.9.0",
-    "vue-svg-pan-zoom": "^1.1.0",
-    "vue-blob-json-csv": "^0.1.7"
+    "v-hotkey": "0.9.0",
+    "vue-svg-pan-zoom": "1.1.0",
+    "vue-blob-json-csv": "0.1.7"
   },
   "devDependencies": {
     "@vue/cli-plugin-eslint": "5.0.4",
