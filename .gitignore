@@ -69,3 +69,5 @@ node_modules/
 /topics/addin/Rimshot.2022/bin/x64/Debug
 /topics/addin/Rimshot.2022/obj/x64/Debug
 /topics/addin/Rimshot.2022/obj
+
+**/desktop.ini
