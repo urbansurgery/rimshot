@@ -1,15 +1,22 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Vue from 'vue';
+import Vuex from 'vuex';
 
-Vue.use(Vuex)
+import { db } from '@/plugins/firebase';
 
-export default new Vuex.Store({
-  state: {
-  },
-  mutations: {
-  },
-  actions: {
-  },
-  modules: {
-  }
-})
+import mutations from './mutations';
+import actions from './actions';
+import state from './state';
+import getters from './getters';
+
+Vue.use(Vuex);
+
+const debug = process.env.NODE_ENV !== 'production';
+
+export const store = new Vuex.Store({
+  state,
+  getters,
+  actions,
+  mutations,
+  modules: {},
+  strict: debug,
+});
