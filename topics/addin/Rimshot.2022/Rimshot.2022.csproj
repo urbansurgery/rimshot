@@ -149,7 +149,7 @@
     <PackageReference Include="SQLite.Interop.dll">
       <Version>1.0.103</Version>
     </PackageReference>
-    <PackageReference Include="System.Data.SQLite.Core">
+    <PackageReference Include="System.Data.SQLite.Core" PrivateAssets="none">
       <Version>1.0.115.5</Version>
     </PackageReference>
     <PackageReference Include="System.Reactive">
