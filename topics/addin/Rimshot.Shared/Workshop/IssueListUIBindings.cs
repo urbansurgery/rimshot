@@ -13,6 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using Color = System.Drawing.Color;
@@ -124,7 +125,8 @@ namespace Rimshot.Shared.Workshop {
 
       for ( int e = 0; e < elementCount; e++ ) {
         ModelItem element = selectedItems[ e ];
-        NotifyUI( "elements", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
+        //NotifyUI( "elements", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
+        Console.WriteLine( $"Elements: {e}/{elementCount}" );
         Elements.Add( TranslateElement( element ) );
       }
 
@@ -171,7 +173,8 @@ namespace Rimshot.Shared.Workshop {
       if ( descendantsCount > 0 ) {
         for ( int c = 0; c < descendantsCount; c++ ) {
           ModelItem child = element.Descendants.ElementAt( c );
-          NotifyUI( "nested", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
+          //NotifyUI( "nested", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
+          Console.WriteLine( $"Nested: {c}/{descendantsCount}" );
           children.Add( TranslateElement( child ) );
         }
         elementBase[ "@Elements" ] = children;
@@ -212,7 +215,6 @@ namespace Rimshot.Shared.Workshop {
             case VariantDataType.NamedConstant: propValue = prop.Value.ToNamedConstant().ToString(); break;
             case VariantDataType.Point3D: propValue = prop.Value.ToPoint3D().ToString(); break;
             case VariantDataType.None: break;
-
           }
 
           if ( propValue != null ) {
@@ -230,9 +232,25 @@ namespace Rimshot.Shared.Workshop {
         }
       }
 
-      elementBase[ "Properties" ] = propDict;
+      Base propertiesBase = new Base();
+      foreach ( KeyValuePair<string, dynamic> entry in propDict ) {
+        if ( entry.Value == null ) {
+          continue;
+        }
+        propertiesBase[ SanitizePropName( entry.Key ) ] = entry.Value;
+      }
+
+      elementBase[ "Properties" ] = propertiesBase;
 
       return elementBase;
+    }
+
+    public string SanitizePropName ( string name ) {
+
+      // Regex pattern from speckle-sharp/Core/Core/Models/DynamicBase.cs IsPropNameValid
+      string cleanName = Regex.Replace( name, @"[\.\/]", "_" );
+
+      return cleanName;
     }
 
     public List<Objects.Geometry.Mesh> TranslateGeometry ( ModelItem geom ) {
@@ -246,15 +264,17 @@ namespace Rimshot.Shared.Workshop {
 
         List<double> vertices = new List<double>();
         List<int> faces = new List<int>();
-        List<NavisTriangle> Triangles = callback.Triangles;
+        List<NavisDoubleTriangle> Triangles = callback.Triangles;
         int triangleCount = Triangles.Count;
 
         if ( triangleCount > 0 ) {
+          Console.WriteLine( $"Triangles: {triangleCount}" );
           for ( int t = 0; t < triangleCount; t += 1 ) {
 
-            NotifyUI( "triangles", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+            //NotifyUI( "triangles", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
 
-            double scale = 0.001;
+
+            double scale = ( double )0.001;
 
             vertices.AddRange( new List<double>() { Triangles[ t ].Vertex1.X * scale, Triangles[ t ].Vertex1.Y * scale, Triangles[ t ].Vertex1.Z * scale } );
             vertices.AddRange( new List<double>() { Triangles[ t ].Vertex2.X * scale, Triangles[ t ].Vertex2.Y * scale, Triangles[ t ].Vertex2.Z * scale } );
@@ -266,7 +286,6 @@ namespace Rimshot.Shared.Workshop {
             faces.Add( t * 3 + 1 );
             faces.Add( t * 3 + 2 );
           }
-
 
           Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( vertices, faces );
           baseMesh[ "renderMaterial" ] = TranslateMaterial( geom );
@@ -286,7 +305,9 @@ namespace Rimshot.Shared.Workshop {
 
       Color dark = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
 
-      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( 1 - geom.Geometry.OriginalTransparency, 0, 1, original, dark );
+      Objects.Other.RenderMaterial r = new Objects.Other.RenderMaterial( 1 - geom.Geometry.OriginalTransparency, 0, 1, original, dark ) {
+        name = "NavisMaterial"
+      };
 
       return r;
     }
