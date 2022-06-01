@@ -74,7 +74,4 @@
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Analysis\" />
-  </ItemGroup>
 </Project>

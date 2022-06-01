@@ -47,33 +47,33 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\AdWindows.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\AdWindows.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Api">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Api.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Api.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Clash">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Clash.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Clash.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Navisworks.ComApi">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.ComApi.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.ComApi.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Controls">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Controls.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Controls.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.Navisworks.Interop.ComApi">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Interop.ComApi.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\Autodesk.Navisworks.Interop.ComApi.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="navisworks.gui.interface">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\navisworks.gui.interface.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\navisworks.gui.interface.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="navisworks.gui.roamer">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Navisworks Manage 2022\navisworks.gui.roamer.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\navisworks.gui.roamer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -146,7 +146,7 @@
     <PackageReference Include="Speckle.Objects">
       <Version>2.5.2</Version>
     </PackageReference>
-    <PackageReference Include="SQLite.Interop.dll">
+    <PackageReference Include="SQLite.Interop.dll" PrivateAssets="none">
       <Version>1.0.103</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core" PrivateAssets="none">
@@ -158,6 +158,13 @@
   </ItemGroup>
   <Import Project="..\Rimshot.Shared\Rimshot.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
+    <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+    <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
+    <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
+  </PropertyGroup>
+
   <PropertyGroup>
     <PostBuildEvent>
       @echo off
@@ -171,6 +178,10 @@
       echo(
       echo Write Plugin DLL
       xcopy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\Rimshot.Rimshot.bundle\Contents\$(NavisworksBuildNumber)\"
+
+      echo(
+      echo essential Nuget Resources
+      xcopy /s /y "%USERPROFILE%\.nuget\packages\Stub.System.Data.SQLite.Core.NetFramework\1.0.115.5\build\net46\x64\*.dll" "$(TargetDir)"
 
       echo(
       echo Copy UI Resources
