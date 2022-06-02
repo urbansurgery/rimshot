@@ -9,6 +9,7 @@ using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -125,8 +126,9 @@ namespace Rimshot.Shared.Workshop {
 
       for ( int e = 0; e < elementCount; e++ ) {
         ModelItem element = selectedItems[ e ];
+        // TODO: work out a performant way to keep a progress UI element up to date.
         //NotifyUI( "elements", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        Console.WriteLine( $"Elements: {e}/{elementCount}" );
+        Console.WriteLine( $"Elements: {e + 1}/{elementCount}" );
         Elements.Add( TranslateElement( element ) );
       }
 
@@ -165,6 +167,10 @@ namespace Rimshot.Shared.Workshop {
         List<Objects.Geometry.Mesh> geometryToSpeckle = TranslateGeometry( element );
         if ( geometryToSpeckle.Count > 0 ) {
           elementBase[ "displayValue" ] = geometryToSpeckle;
+
+          // TODO: this needs to reflect model reality it will be a property of the ActiveDocument no doubt.
+          // Or perhaps always target metres and convert appropriately
+          elementBase[ "units" ] = "m";
         }
       }
 
@@ -173,27 +179,29 @@ namespace Rimshot.Shared.Workshop {
       if ( descendantsCount > 0 ) {
         for ( int c = 0; c < descendantsCount; c++ ) {
           ModelItem child = element.Descendants.ElementAt( c );
+          // TODO: work out a performant way to keep a progress UI element up to date.
           //NotifyUI( "nested", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
-          Console.WriteLine( $"Nested: {c}/{descendantsCount}" );
+          Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
           children.Add( TranslateElement( child ) );
         }
         elementBase[ "@Elements" ] = children;
       }
 
-      Dictionary<string, dynamic> propDict = new Dictionary<string, dynamic>();
+      Base propertiesBase = new Base();
 
       PropertyCategoryCollection propertyCategories = element.PropertyCategories;
 
-      foreach ( PropertyCategory propCat in propertyCategories ) {
+      foreach ( PropertyCategory propCategory in propertyCategories ) {
 
-        DataPropertyCollection properties = propCat.Properties;
+        DataPropertyCollection properties = propCategory.Properties;
+        Base propertyCategoryBase = new Base();
+        string propertyCategoryName = SanitizePropertyName( propCategory.DisplayName );
 
-        foreach ( DataProperty prop in properties ) {
-
+        foreach ( DataProperty property in properties ) {
           string key;
           try {
 
-            key = prop.CombinedName.ToString();
+            key = SanitizePropertyName( property.DisplayName.ToString() );
           } catch ( Exception err ) {
             Console.WriteLine( $"Property Name not converted. {err.Message}" );
             break;
@@ -201,43 +209,57 @@ namespace Rimshot.Shared.Workshop {
 
           dynamic propValue = null;
 
-          switch ( prop.Value.DataType ) {
-            case VariantDataType.Boolean: propValue = prop.Value.ToBoolean().ToString(); break;
-            case VariantDataType.DisplayString: propValue = prop.Value.ToDisplayString(); break;
-            case VariantDataType.IdentifierString: propValue = prop.Value.ToIdentifierString(); break;
-            case VariantDataType.Int32: propValue = prop.Value.ToInt32().ToString(); break;
-            case VariantDataType.Double: propValue = prop.Value.ToDouble().ToString(); break;
-            case VariantDataType.DoubleAngle: propValue = prop.Value.ToDoubleAngle().ToString(); break;
-            case VariantDataType.DoubleArea: propValue = prop.Value.ToDoubleArea().ToString(); break;
-            case VariantDataType.DoubleLength: propValue = prop.Value.ToDoubleLength().ToString(); break;
-            case VariantDataType.DoubleVolume: propValue = prop.Value.ToDoubleVolume().ToString(); break;
-            case VariantDataType.DateTime: propValue = prop.Value.ToDateTime().ToString(); break;
-            case VariantDataType.NamedConstant: propValue = prop.Value.ToNamedConstant().ToString(); break;
-            case VariantDataType.Point3D: propValue = prop.Value.ToPoint3D().ToString(); break;
+          switch ( property.Value.DataType ) {
+            case VariantDataType.Boolean: propValue = property.Value.ToBoolean().ToString(); break;
+            case VariantDataType.DisplayString: propValue = property.Value.ToDisplayString(); break;
+            case VariantDataType.IdentifierString: propValue = property.Value.ToIdentifierString(); break;
+            case VariantDataType.Int32: propValue = property.Value.ToInt32().ToString(); break;
+            case VariantDataType.Double: propValue = property.Value.ToDouble().ToString(); break;
+            case VariantDataType.DoubleAngle: propValue = property.Value.ToDoubleAngle().ToString(); break;
+            case VariantDataType.DoubleArea: propValue = property.Value.ToDoubleArea().ToString(); break;
+            case VariantDataType.DoubleLength: propValue = property.Value.ToDoubleLength().ToString(); break;
+            case VariantDataType.DoubleVolume: propValue = property.Value.ToDoubleVolume().ToString(); break;
+            case VariantDataType.DateTime: propValue = property.Value.ToDateTime().ToString(); break;
+            case VariantDataType.NamedConstant: propValue = property.Value.ToNamedConstant().ToString(); break;
+            case VariantDataType.Point3D: propValue = property.Value.ToPoint3D().ToString(); break;
             case VariantDataType.None: break;
           }
 
           if ( propValue != null ) {
-            if ( propDict.ContainsKey( key ) && propDict[ key ].GetType().IsArray ) {
-              propDict[ key ].Add( propValue );
-            } else if ( propDict.ContainsKey( key ) ) {
-              dynamic existingValue = propDict[ key ];
-              propDict[ key ] = new List<dynamic>();
-              propDict[ key ].Add( existingValue );
-              propDict[ key ].Add( propValue );
+
+            var keyPropValue = propertyCategoryBase[ key ];
+
+            if ( keyPropValue == null ) {
+              propertyCategoryBase[ key ] = propValue;
+            } else if ( keyPropValue.GetType().IsArray ) {
+              List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
+              arrayPropValue.Add( propValue );
+              propertyCategoryBase[ key ] = arrayPropValue;
             } else {
-              propDict.Add( key, propValue );
+              dynamic existingValue = keyPropValue;
+              List<dynamic> arrayPropValue = new List<dynamic>();
+              arrayPropValue.Add( existingValue );
+              arrayPropValue.Add( propValue );
+              propertyCategoryBase[ key ] = arrayPropValue;
+            }
+
+          }
+        }
+
+        if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategoryName != null ) {
+          if ( propertiesBase != null ) {
+
+            if ( propertyCategoryName == "Geometry" ) {
+              continue;
+            }
+
+            if ( propertyCategoryName == "Item" ) {
+              propertiesBase[ "NavisItem" ] = propertyCategoryBase;
+            } else {
+              propertiesBase[ propertyCategoryName ] = propertyCategoryBase;
             }
           }
         }
-      }
-
-      Base propertiesBase = new Base();
-      foreach ( KeyValuePair<string, dynamic> entry in propDict ) {
-        if ( entry.Value == null ) {
-          continue;
-        }
-        propertiesBase[ SanitizePropName( entry.Key ) ] = entry.Value;
       }
 
       elementBase[ "Properties" ] = propertiesBase;
@@ -245,15 +267,13 @@ namespace Rimshot.Shared.Workshop {
       return elementBase;
     }
 
-    public string SanitizePropName ( string name ) {
-
+    public string SanitizePropertyName ( string name ) {
       // Regex pattern from speckle-sharp/Core/Core/Models/DynamicBase.cs IsPropNameValid
       string cleanName = Regex.Replace( name, @"[\.\/]", "_" );
-
       return cleanName;
     }
 
-    public List<Objects.Geometry.Mesh> TranslateGeometry ( ModelItem geom ) {
+    public List<Objects.Geometry.Mesh> TranslateGeometry ( ModelItem geom ) { // TODO: This should move to Geometry.cs or Conversions.cs
 
       NavisGeometry navisGeometry = new NavisGeometry( geom );
       List<Shared.CallbackGeomListener> cb = navisGeometry.GetFragments();
@@ -271,10 +291,11 @@ namespace Rimshot.Shared.Workshop {
           Console.WriteLine( $"Triangles: {triangleCount}" );
           for ( int t = 0; t < triangleCount; t += 1 ) {
 
+            // TODO: work out a performant way to keep a progress UI element up to date.
             //NotifyUI( "triangles", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
 
 
-            double scale = ( double )0.001;
+            double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
 
             vertices.AddRange( new List<double>() { Triangles[ t ].Vertex1.X * scale, Triangles[ t ].Vertex1.Y * scale, Triangles[ t ].Vertex1.Z * scale } );
             vertices.AddRange( new List<double>() { Triangles[ t ].Vertex2.X * scale, Triangles[ t ].Vertex2.Y * scale, Triangles[ t ].Vertex2.Z * scale } );
@@ -296,7 +317,7 @@ namespace Rimshot.Shared.Workshop {
       return baseMeshes;
     }
 
-    public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
+    public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) { // TODO: Extract this to a Conversions.cs or similar
 
       Color original = Color.FromArgb(
         Convert.ToInt32( geom.Geometry.OriginalColor.R * 255 ),
@@ -391,7 +412,7 @@ namespace Rimshot.Shared.Workshop {
     }
   }
 
-  public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB {
+  public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB { // TODO: Move this to Geometry.cs
     public List<decimal> Coords { get; set; }
     public decimal[] Matrix { get; set; }
     public CallbackGeomListener () {
