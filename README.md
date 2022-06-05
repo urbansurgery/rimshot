@@ -58,6 +58,14 @@ Utilising two aspects that I admire of Speckle:
 
 The hackathon submission consists of:
 
+### Geometry and Data Connector for Navisworks
+<img src="https://user-images.githubusercontent.com/760691/172045289-15c051ff-085b-4b4e-b30b-bc9ced03d516.png" width="300"/>
+* Full conversion of selected elements from Navis to Specklemesh
+<img src="https://user-images.githubusercontent.com/760691/172045409-1a9c56ee-9c0e-4285-a1ac-426c40ad3a27.png" width="300"/>
+* Full fidelity of Geometry @ real world coordinates
+<img src="https://user-images.githubusercontent.com/760691/172045370-adae8dd9-ed77-4b6c-8741-78054f8956d5.png" width="300"/>
+* Full Property stack with nested Geometric and Non-geometric elements reflecting the Navis selection tree
+
 ### An installed webview addin for Navisworks.
 <img src="https://user-images.githubusercontent.com/760691/168424755-e6e887e3-89f0-42aa-9f43-ee712722ace1.png" alt="logo" width="300"/>
 * Model elements selected in Navis will be committed and synced to the app. 
