@@ -45,6 +45,9 @@
     <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
     <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdWindows">
       <HintPath>C:\Program Files\Autodesk\Navisworks Manage 2022\AdWindows.dll</HintPath>
@@ -116,6 +119,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="app.config" />
+    <None Include="app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -123,16 +127,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="cef.redist.x64">
-      <Version>89.0.17</Version>
+      <Version>101.0.18</Version>
     </PackageReference>
     <PackageReference Include="cef.redist.x86">
-      <Version>89.0.17</Version>
+      <Version>101.0.18</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Common">
-      <Version>89.0.170</Version>
+      <Version>101.0.180</Version>
     </PackageReference>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>89.0.170</Version>
+      <Version>101.0.180</Version>
     </PackageReference>
     <PackageReference Include="Ionic.Zip-1.9.1.8">
       <Version>1.9.1.8</Version>
@@ -164,7 +168,6 @@
     <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
     <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
   </PropertyGroup>
-
   <PropertyGroup>
     <PostBuildEvent>
       @echo off
