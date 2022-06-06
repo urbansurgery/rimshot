@@ -24,20 +24,20 @@ using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
 namespace Rimshot.Shared.Workshop {
+
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "https://rimshot.app/issues";
+    const string rimshotUrl = "http://192.168.86.29:8080/issues";
 #else
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
     public const string Url = rimshotUrl;
     private const int V = 131004;
+    private const int Modulo = 5;
     private string _tempFolder = "";
 
-
-
-
     public IWebBrowser Browser { get; set; }
+
     public IssueListPane Window { get; set; }
     private string image;
 
@@ -52,9 +52,22 @@ namespace Rimshot.Shared.Workshop {
       Browser.GetMainFrame().EvaluateScriptAsync( script );
     }
 
+    public virtual void CommitStoreMutationUI ( string storeMutationName, string args = null ) {
+      string script = string.Format( "window.Store.commit('{0}', '{1}')", storeMutationName, args );
+      try {
+        Browser.GetMainFrame().EvaluateScriptAsync( script );
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+      }
+    }
+
     public virtual void DispatchStoreActionUI ( string storeActionName, string args = null ) {
       string script = string.Format( "window.Store.dispatch('{0}', '{1}')", storeActionName, args );
-      Browser.GetMainFrame().EvaluateScriptAsync( script );
+      try {
+        Browser.GetMainFrame().EvaluateScriptAsync( script );
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+      }
     }
 
     public virtual void ShowDev () => this.Browser.ShowDevTools();
@@ -68,7 +81,6 @@ namespace Rimshot.Shared.Workshop {
     public virtual void CommitSelection ( object payload ) => this.CommitSelectedObjectsToSpeckle( payload );
     public virtual string UpdateView ( string camera ) {
       Console.WriteLine( camera );
-
       return camera;
     }
 
@@ -76,19 +88,14 @@ namespace Rimshot.Shared.Workshop {
 
       Console.WriteLine( "Commit Selection commenced." );
 
-      Type payloadType = payload.GetType();
-
-      PropertyInfo streamProp = payloadType.GetProperty( "stream" );
-      PropertyInfo hostProp = payloadType.GetProperty( "host" );
-      PropertyInfo branchProp = payloadType.GetProperty( "branch" );
-      PropertyInfo issueProp = payloadType.GetProperty( "issueId" );
-
       dynamic commitPayload = ( dynamic )payload;
 
       string branchName = commitPayload.branch;
       string streamId = commitPayload.stream;
       string host = commitPayload.host;
       string issueId = commitPayload.issueId;
+
+      Console.WriteLine( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
 
       string description = $"issueId:{issueId}";
 
@@ -123,12 +130,22 @@ namespace Rimshot.Shared.Workshop {
       List<Base> Elements = new List<Base>();
 
       int elementCount = selectedItems.Count;
-
+      //int c = 0;
       for ( int e = 0; e < elementCount; e++ ) {
         ModelItem element = selectedItems[ e ];
         // TODO: work out a performant way to keep a progress UI element up to date.
-        //NotifyUI( "elements", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        Console.WriteLine( $"Elements: {e + 1}/{elementCount}" );
+        //NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
+        //Console.WriteLine( $"Elements: {e + 1}/{elementCount}" );double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
+        //double progress = ( ( double )e + 1 ) / ( double )elementCount * 100;
+        //int c2 = ( int )Math.Truncate( progress );
+
+        //if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
+        //c = c2;
+        //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
+        //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+        //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+        CommitStoreMutationUI( "SET_ELEMENT_PROGRESS", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
+        //}
         Elements.Add( TranslateElement( element ) );
       }
 
@@ -177,11 +194,22 @@ namespace Rimshot.Shared.Workshop {
       List<Base> children = new List<Base>();
 
       if ( descendantsCount > 0 ) {
-        for ( int c = 0; c < descendantsCount; c++ ) {
-          ModelItem child = element.Descendants.ElementAt( c );
+        int c = 0;
+        for ( int d = 0; d < descendantsCount; d++ ) {
+          ModelItem child = element.Descendants.ElementAt( d );
           // TODO: work out a performant way to keep a progress UI element up to date.
-          //NotifyUI( "nested", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
-          Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
+          //NotifyUI( "nested-progress", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
+          //Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
+          double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
+          int c2 = ( int )Math.Truncate( progress );
+
+          if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
+            c = c2;
+            //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
+            //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+            //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+            CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
+          }
           children.Add( TranslateElement( child ) );
         }
         elementBase[ "@Elements" ] = children;
@@ -288,13 +316,22 @@ namespace Rimshot.Shared.Workshop {
         int triangleCount = Triangles.Count;
 
         if ( triangleCount > 0 ) {
-          Console.WriteLine( $"Triangles: {triangleCount}" );
+          //Console.WriteLine( $"Triangles: {triangleCount}" );
+
+          int c = 0;
           for ( int t = 0; t < triangleCount; t += 1 ) {
 
             // TODO: work out a performant way to keep a progress UI element up to date.
-            //NotifyUI( "triangles", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+            double progress = ( ( double )t + 1 ) / ( double )triangleCount * 100;
+            int c2 = ( int )Math.Truncate( progress );
 
-
+            if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
+              c = c2;
+              //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
+              //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+              //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+              CommitStoreMutationUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
+            }
             double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
 
             vertices.AddRange( new List<double>() { Triangles[ t ].Vertex1.X * scale, Triangles[ t ].Vertex1.Y * scale, Triangles[ t ].Vertex1.Z * scale } );

@@ -13,10 +13,16 @@ namespace Rimshot.Shared.Workshop.IssueList {
 
     public override Control CreateControlPane () {
 
+#if DEBUG
+      System.Console.WriteLine( "Mode=Debug" );
+
+#else
+      System.Console.WriteLine( "Mode=Release" );     
+#endif
 
       ElementHost eh = new ElementHost {
         AutoSize = true,
-        Child = new IssueListPane( /*address: "https://rimshot.app/issues/"*/ )
+        Child = new IssueListPane( /*address: "https://rimshot.app/issues"*/ )
       };
 
       eh.CreateControl();
