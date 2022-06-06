@@ -11,7 +11,14 @@ module.exports = {
     port: 8080,
   },
   publicPath: '/',
+  pluginOptions: {
+    webpackBundleAnalyzer: {
+      analyzerMode: 'disabled',
+    },
+  },
   configureWebpack: (config) => {
+    console.log({ env: process.env.NODE_ENV });
+
     if (process.env.NODE_ENV === 'development') {
       config.devtool = 'source-map';
 
