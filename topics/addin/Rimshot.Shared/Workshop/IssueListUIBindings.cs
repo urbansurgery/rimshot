@@ -24,20 +24,20 @@ using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
 namespace Rimshot.Shared.Workshop {
+
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "https://rimshot.app/issues";
+    const string rimshotUrl = "http://192.168.86.29:8080/issues";
 #else
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
     public const string Url = rimshotUrl;
     private const int V = 131004;
+    private const int Modulo = 5;
     private string _tempFolder = "";
 
-
-
-
     public IWebBrowser Browser { get; set; }
+
     public IssueListPane Window { get; set; }
     private string image;
 
@@ -68,20 +68,12 @@ namespace Rimshot.Shared.Workshop {
     public virtual void CommitSelection ( object payload ) => this.CommitSelectedObjectsToSpeckle( payload );
     public virtual string UpdateView ( string camera ) {
       Console.WriteLine( camera );
-
       return camera;
     }
 
     private async void CommitSelectedObjectsToSpeckle ( object payload ) {
 
       Console.WriteLine( "Commit Selection commenced." );
-
-      Type payloadType = payload.GetType();
-
-      PropertyInfo streamProp = payloadType.GetProperty( "stream" );
-      PropertyInfo hostProp = payloadType.GetProperty( "host" );
-      PropertyInfo branchProp = payloadType.GetProperty( "branch" );
-      PropertyInfo issueProp = payloadType.GetProperty( "issueId" );
 
       dynamic commitPayload = ( dynamic )payload;
 
