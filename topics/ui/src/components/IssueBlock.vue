@@ -1,6 +1,7 @@
 <script>
   import Vue, { PropType } from 'vue';
   import { db } from '@/plugins/firebase';
+  import { mapActions, mapState, Store } from 'vuex';
 
   const IssueType = {
     CLASH: 'Model Clash',
@@ -129,6 +130,12 @@
       };
     },
     computed: {
+      ...mapState({
+        commitProgress: (state) => state.commitProgress,
+        commitElements: (state) => state.commitElements,
+        commitNested: (state) => state.commitNested,
+        commitGeometry: (state) => state.commitGeometry,
+      }),
       comments() {
         const mockComments = [
           'This is fantastic',
@@ -148,6 +155,9 @@
       commentCount() {
         return this.comments.length;
       },
+      host() {
+        return this.$store?.state?.currentProject?.host;
+      },
       isPrint() {
         return window.matchMedia('print').matches;
       },
@@ -166,7 +176,10 @@
           issueId: this.issue.id,
           stream: this.$store.state.currentProject?.speckle_stream,
           branch: this.speckleBranchName,
-          host: speckle_host || 'https://speckle.xyz',
+          host:
+            speckle_host || this.host
+              ? `https://${this.host}`
+              : null || 'https://speckle.xyz',
         };
         if (payload?.stream) {
           return payload;
@@ -180,8 +193,12 @@
           speckle_stream,
           speckle_object,
           speckle_commit_object,
-          speckle_host = 'https://speckle.xyz',
         } = this.issue;
+
+        const speckle_host =
+          this.issue?.speckle_host || this.host
+            ? `https://${this.host}`
+            : null || 'https://speckle.xyz';
 
         const urlParts = {
           host: speckle_host ?? 'https://speckle.xyz',
@@ -211,8 +228,12 @@
           speckle_stream,
           speckle_object,
           speckle_commit_object,
-          speckle_host = 'https://speckle.xyz',
         } = this.issue;
+
+        const speckle_host =
+          this.issue?.speckle_host || this.host
+            ? `https://${this.host}`
+            : null || 'https://speckle.xyz';
 
         const urlParts = {
           host: speckle_host ?? 'https://speckle.xyz',
@@ -221,18 +242,10 @@
           commitObject: speckle_commit_object,
           object: speckle_object,
         };
-        // console.log({ urlParts });
-        // if (speckle_host && speckle_stream && speckle_commit_object != false) {
-        //   return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.commitObject}`;
-        // }
 
         if (speckle_host && speckle_stream && speckle_commit) {
           return `${urlParts.host}/streams/${urlParts.stream}/commits/${urlParts.commit}`;
         }
-
-        // if (speckle_host && speckle_stream && speckle_object) {
-        // }
-        // return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.object}`;
 
         return null;
       },
@@ -271,6 +284,7 @@
       },
       commitSelection() {
         if (this.bindings) {
+          this.$store.commit('SET_COMMIT_PROGRESS', this.issue.id);
           this.bindings.commitSelection(this.speckleCommit);
         }
       },
@@ -502,6 +516,18 @@
           />
         </v-col>
         <v-col cols="5" align-self="end">
+          <div v-if="commitGeometry" style="min-height: 4px">
+            <label>Geometry</label>
+            <v-progress-linear :value="commitGeometry" />
+          </div>
+          <div v-if="commitNested" style="min-height: 4px">
+            <label>Element Hierarchy</label>
+            <v-progress-linear :value="commitNested" />
+          </div>
+          <div v-if="commitElements" style="min-height: 4px">
+            <label>Elements</label>
+            <v-progress-linear :value="commitElements" />
+          </div>
           <!-- <span class="caption mb-4 pb-4"
                   >Commit will be made with<v-spacer /> objects selected in the
                   navigator</span
@@ -510,6 +536,7 @@
             v-if="bindings"
             color="info"
             class="mt-4"
+            :disabled="Boolean(commitProgress)"
             @click="commitSelection"
           >
             Commit Selection
@@ -694,6 +721,14 @@
   .first .issue-selector .shift-issue-up .v-btn,
   .last .issue-selector .shift-issue-down .v-btn {
     display: none;
+  }
+</style>
+
+<style lang="css">
+  .v-progress-linear,
+  .v-progress-linear__bar,
+  .v-progress-linear__bar__determinate {
+    transition: none !important;
   }
 </style>
 

@@ -223,12 +223,23 @@ export default {
   ) => {
     commit('SET_ISSUE_COMMIT', { issueId, commit, stream, object });
 
-    db.collection('issues')
-      .doc(issueId)
-      .update({
-        speckle_commit: commitId,
-        speckle_stream: stream,
-        speckle_commit_object: object,
-      });
+    db.collection('issues').doc(issueId).update({
+      speckle_commit: commitId,
+      speckle_stream: stream,
+      speckle_commit_object: object,
+    });
+  },
+  SET_ELEMENT_PROGRESS: ({ commit }, progress) => {
+    commit('SET_ELEMENT_PROGRESS', progress * 100);
+  },
+  SET_NESTED_PROGRESS: (state, progress) => {
+    commit('SET_NESTED_PROGRESS', progress * 100);
+  },
+  SET_GEOMETRY_PROGRESS: ({ commit }, progress) => {
+    const { count, current } = JSON.parse(progress);
+    commit(
+      'SET_GEOMETRY_PROGRESS',
+      count == 0 ? 0 : Math.round(current / count, 2)
+    );
   },
 };

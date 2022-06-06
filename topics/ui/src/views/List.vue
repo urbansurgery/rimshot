@@ -42,6 +42,9 @@
       },
     },
     watch: {
+      $progress(to, from) {
+        console.log(to);
+      },
       bound(bound) {
         if (bound && this.activeWorkshop) {
           this.selectedWorkshopDetails = this.$store.getters[
@@ -53,21 +56,47 @@
     created() {
       window.Store = this.$store;
       window.EventBus = new Vue();
+      window.app = this;
 
-      window.EventBus.$on('commit_sent', (commitjson) => {
-        if (commitjson) {
-          const commitParams = JSON.parse(commitjson);
+      window.EventBus.$on('element-progress', (payload) => {
+        if (payload) {
+          const { current, count } = JSON.parse(payload);
+          // console.log({ elements: [current, count] });
+          this.$store.commit('SET_ELEMENT_PROGRESS', current / count);
+        }
+      });
 
-          console.log({ commitParams });
+      window.EventBus.$on('nested-progress', (payload) => {
+        if (payload) {
+          const { current, count } = JSON.parse(payload);
+          // console.log({ nested: payload });
+          this.$store.commit('SET_NESTED_PROGRESS', current / count);
+        }
+      });
 
-          const { stream, issueId, commit, object } = commitParams;
+      window.EventBus.$on('geometry-progress', (payload) => {
+        if (payload) {
+          const { current, count } = JSON.parse(payload);
+          // console.log({ geometry: payload });
+          this.$store.commit('SET_GEOMETRY_PROGRESS', current / count);
+        }
+      });
 
-          this.$store.dispatch('RECORD_ISSUE_COMMIT', {
-            issueId,
-            commit,
-            stream,
-            object,
-          });
+      window.EventBus.$on('commit_sent', (commit_payload) => {
+        if (commit_payload) {
+          // console.log({ commit: commit_payload });
+          const { stream, issueId, commit, objectId: object } = commit_payload;
+
+          this.$store
+            .dispatch('RECORD_ISSUE_COMMIT', {
+              issueId,
+              commit,
+              stream,
+              object,
+            })
+            .then(() => {
+              this.$store.commit('CANCEL_COMMIT_PROGRESS', { issueId });
+            });
         }
       });
 
