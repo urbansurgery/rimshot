@@ -197,11 +197,11 @@ namespace Rimshot.Shared.Workshop {
         Window = this,
       };
 
-
       this.Browser.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;
       this.Browser.JavascriptObjectRepository.Register( "UIBindings", this.bindings, isAsync: true, options: BindingOptions.DefaultBinder );
 
       this.Browser.Address = address;
+      this.Browser.BrowserSettings.WebGl = CefState.Enabled;
     }
     private void InitializeCef () {
       if ( Cef.IsInitialized ) {
@@ -209,8 +209,11 @@ namespace Rimshot.Shared.Workshop {
       }
 
       Cef.EnableHighDPISupport();
+
       CefSettings settings = new CefSettings() {
-        CachePath = Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ), "CefSharp\\Cache" )
+        CachePath = Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ), "CefSharp\\Cache" ),
+        RemoteDebuggingPort = 8099,
+        PersistUserPreferences = true
       };
 
       try {
