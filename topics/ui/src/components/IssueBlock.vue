@@ -148,6 +148,9 @@
       commentCount() {
         return this.comments.length;
       },
+      host() {
+        return this.$store?.state?.currentProject?.host;
+      },
       isPrint() {
         return window.matchMedia('print').matches;
       },
@@ -166,7 +169,10 @@
           issueId: this.issue.id,
           stream: this.$store.state.currentProject?.speckle_stream,
           branch: this.speckleBranchName,
-          host: speckle_host || 'https://speckle.xyz',
+          host:
+            speckle_host || this.host
+              ? `https://${this.host}`
+              : null || 'https://speckle.xyz',
         };
         if (payload?.stream) {
           return payload;
@@ -180,8 +186,12 @@
           speckle_stream,
           speckle_object,
           speckle_commit_object,
-          speckle_host = 'https://speckle.xyz',
         } = this.issue;
+
+        const speckle_host =
+          this.issue?.speckle_host || this.host
+            ? `https://${this.host}`
+            : null || 'https://speckle.xyz';
 
         const urlParts = {
           host: speckle_host ?? 'https://speckle.xyz',
@@ -211,8 +221,12 @@
           speckle_stream,
           speckle_object,
           speckle_commit_object,
-          speckle_host = 'https://speckle.xyz',
         } = this.issue;
+
+        const speckle_host =
+          this.issue?.speckle_host || this.host
+            ? `https://${this.host}`
+            : null || 'https://speckle.xyz';
 
         const urlParts = {
           host: speckle_host ?? 'https://speckle.xyz',
@@ -221,18 +235,10 @@
           commitObject: speckle_commit_object,
           object: speckle_object,
         };
-        // console.log({ urlParts });
-        // if (speckle_host && speckle_stream && speckle_commit_object != false) {
-        //   return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.commitObject}`;
-        // }
 
         if (speckle_host && speckle_stream && speckle_commit) {
           return `${urlParts.host}/streams/${urlParts.stream}/commits/${urlParts.commit}`;
         }
-
-        // if (speckle_host && speckle_stream && speckle_object) {
-        // }
-        // return `${urlParts.host}/streams/${urlParts.stream}/objects/${urlParts.object}`;
 
         return null;
       },
