@@ -23,4 +23,35 @@ export default {
   },
   RESET_STATE: () => {},
   SET_ISSUE_COMMIT: (state, { commitId, stream, issueId }) => {},
+  SET_COMMIT_PROGRESS: (state, flag) => {
+    if (flag === Boolean(flag)) {
+      state.commitProgress = Boolean(flag);
+    } else {
+      state.commitProgress = flag;
+    }
+  },
+  SET_ELEMENT_PROGRESS: (state, progress) => {
+    const { count, current } = JSON.parse(progress);
+    state.commitElements = count == 0 ? 0 : Math.round((current / count) * 100);
+    // console.log(state.commitGeometry, progress);
+  },
+  SET_NESTED_PROGRESS: (state, progress) => {
+    const { count, current } = JSON.parse(progress);
+    state.commitNested = count == 0 ? 0 : Math.round((current / count) * 100);
+    // console.log(state.commitGeometry, progress);
+  },
+  SET_GEOMETRY_PROGRESS: (state, progress) => {
+    const { count, current } = JSON.parse(progress);
+    state.commitGeometry = count == 0 ? 0 : Math.round((current / count) * 100);
+    // console.log(state.commitGeometry, progress);
+  },
+  CANCEL_COMMIT_PROGRESS: (state, { issueId }) => {
+    // console.log('Cancelling commit progress');
+    if (issueId === state.commitProgress) {
+      state.commitProgress = false;
+      state.commitGeometry = 0;
+      state.commitNested = 0;
+      state.commitElements = 0;
+    }
+  },
 };
