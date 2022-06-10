@@ -110,14 +110,23 @@ namespace Rimshot.Shared.Workshop {
         if ( branch is null ) {
           branch = await CreateBranch( client, streamId, branchName, description );
         }
-      } catch ( Exception e ) {
-        NotifyUI( "error", new { message = e.Message } );
+      } catch ( Exception err ) {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine( err.Message.ToString() );
+        Console.ForegroundColor = ConsoleColor.Gray;
+        NotifyUI( "error", new { message = err.Message } );
       }
 
-      branch = client.BranchGet( streamId, branchName, 1 ).Result;
+      try {
+        branch = client.BranchGet( streamId, branchName, 1 ).Result;
 
-      if ( branch != null ) {
-        NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
+        if ( branch != null ) {
+          NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
+        }
+      } catch ( Exception err ) {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine( err.Message.ToString() );
+        Console.ForegroundColor = ConsoleColor.Gray;
       }
 
       Document activeDocument = NavisworksApp.ActiveDocument;
@@ -178,7 +187,8 @@ namespace Rimshot.Shared.Workshop {
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
 
-      int descendantsCount = element.Descendants.Count();
+      //int descendantsCount = element.Descendants.Count();
+      int descendantsCount = element.Children.Count();
 
       if ( element.HasGeometry && descendantsCount == 0 ) {
         List<Objects.Geometry.Mesh> geometryToSpeckle = TranslateGeometry( element );
@@ -196,7 +206,8 @@ namespace Rimshot.Shared.Workshop {
       if ( descendantsCount > 0 ) {
         int c = 0;
         for ( int d = 0; d < descendantsCount; d++ ) {
-          ModelItem child = element.Descendants.ElementAt( d );
+          //ModelItem child = element.Descendants.ElementAt( d );
+          ModelItem child = element.Children.ElementAt( d );
           // TODO: work out a performant way to keep a progress UI element up to date.
           //NotifyUI( "nested-progress", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
           //Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
@@ -208,7 +219,7 @@ namespace Rimshot.Shared.Workshop {
             //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
             //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
             //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
+            //CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
           }
           children.Add( TranslateElement( child ) );
         }
