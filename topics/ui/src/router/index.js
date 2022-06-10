@@ -21,7 +21,13 @@ const routes = [
       return import('../views/Blank.vue');
     },
   },
-
+  {
+    path: '/about',
+    name: 'About',
+    component: function () {
+      return import('../views/About.vue');
+    },
+  },
   {
     path: '/issues',
     component: function () {
