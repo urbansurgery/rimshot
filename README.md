@@ -1,9 +1,9 @@
 # Rimshot
 
-<img src="https://user-images.githubusercontent.com/760691/172910463-278c4e2c-879d-4a07-9bb9-150cae535287.png?raw=true" alt="logo" width="200"/>
+<img src="https://user-images.githubusercontent.com/760691/173029738-0d8e4e7e-47f1-4bc4-a08c-16e72622dd65.png?raw=true" alt="logo" width="150"/>
 
 
-## [R]ealtime [I]ssue [M]anagement with [S]peckle - HOT! 🔥
+## Realtime Issue Management with Speckle ##
 
 [https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)
 
