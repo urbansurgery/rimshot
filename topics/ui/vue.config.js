@@ -60,11 +60,22 @@ module.exports = {
   pwa: {
     short_name: `Rimshot`,
     name: `Rimshot - Realtime Issue Management with Speckle`,
-    themeColor: '#ffffff',
-    msTileColor: '#000000',
+    themeColor: '#047efb',
+    msTileColor: '#2f2f2f',
     appleMobileWebAppCapable: 'yes',
-    appleMobileWebAppStatusBarStyle: '#7f0000',
+    appleMobileWebAppStatusBarStyle: '#047efb',
     display: 'minimal-ui',
+
+    manifestOptions: {},
+
+    iconPaths: {
+      favicon: 'img/icons/favicon.ico',
+      favicon32: 'img/icons/favicon-32x32.png',
+      favicon16: 'img/icons/favicon-16x16.png',
+      appleTouchIcon: 'img/icons/apple-touch-icon-152x152.png',
+      'android-chrome-192x192': 'img/icons/android-chrome-192x192.png',
+    },
+
     scope: '/',
 
     shortcuts: [],
