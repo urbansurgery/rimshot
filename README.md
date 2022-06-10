@@ -1,9 +1,6 @@
-# Rimshot
-
 <img src="https://user-images.githubusercontent.com/760691/173029738-0d8e4e7e-47f1-4bc4-a08c-16e72622dd65.png?raw=true" alt="logo" width="150"/>
 
-
-## Realtime Issue Management with Speckle ##
+# Rimshot<br />Realtime Issue Management with Speckle #
 
 <!-- [https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)-->
 
