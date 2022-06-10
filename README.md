@@ -18,7 +18,7 @@ Utilising two aspects that I admire of Speckle:
 1. Information Hub and low-friction data transfer.
 2. Bring people to the Model. Speckle is multiplayer.
 
-[<img src="https://img.youtube.com/vi/1lUDgHJP7H4/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://youtu.be/5smZXGv7zXg)
+[<img src="https://img.youtube.com/vi/5smZXGv7zXg/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://youtu.be/5smZXGv7zXg)
 
 [The XYZ project stream used in the demo](https://speckle.xyz/streams/cb23d07ec2)
 
