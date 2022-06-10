@@ -94,7 +94,7 @@ The hackathon submission consists of:
 * Proper linking with Auth flow and project/stream selection.
 * Syncing of Comments between the two databases - near realtime.
 * More responsive syncing. Allow Speckle to push to the app (perhaps closing out issues, 3rd party commits)
-* Sorting out the 🔥HOT MESS🔥 of the Navisworks geometry translation.
+* ~~Sorting out the 🔥HOT MESS🔥 of the Navisworks geometry translation.~~
 <img src="https://user-images.githubusercontent.com/760691/168424674-539b5dd1-db83-4bdf-98aa-b4cfd2bc1d0e.png" alt="logo" width="500"/>
 
 * Integate the Speckle Viewer rather than embed views.
