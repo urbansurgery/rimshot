@@ -785,11 +785,11 @@
     padding: 0 2em;
   }
 
-  #boundingbox path,
-  #footprint path,
-  #grid path {
-    vector-effect: non-scaling-stroke;
-  }
+  // #boundingbox path,
+  // #footprint path,
+  // #grid path {
+  //   vector-effect: non-scaling-stroke;
+  // }
 
   #boundingbox {
     path {

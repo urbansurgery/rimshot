@@ -358,7 +358,7 @@
             :value="actionRequired"
             hint="Should contain the description of the specific action to resolve the issue."
             :auto-grow="true"
-            @change="editIssueField('action-required', $event)"
+            @change="editIssueField('actionRequired', $event)"
           />
           <v-combobox
             :value="actioners"
@@ -573,7 +573,7 @@
             :value="comment"
             hint="How can we improve this issue?"
             :auto-grow="true"
-            @change="editIssueField('action-required', $event)"
+            @change="editIssueField('actionRequired', $event)"
         /></v-col>
       </v-row>
     </v-col>
