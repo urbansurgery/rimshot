@@ -5,9 +5,7 @@
 
 ## Realtime Issue Management with Speckle ##
 
-[https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)
-
-## Premise ##
+<!-- [https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)-->
 
 During the Great Lockdown of the last two years, in what has so quickly become a remote-working, online-first-meetings, broadcast only way of doing business. One really striking aspect of the AECO world, away from the Teams, Google Docs, Zoom and the like, was that the manner of Model Analysis and review has not been in the same class of technological delivery.
 
