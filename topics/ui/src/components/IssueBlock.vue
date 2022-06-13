@@ -549,7 +549,7 @@
             color="primary"
             class="mt-5 mb-2"
           >
-            View on Speckle
+            Launch external viewer
           </v-btn>
         </v-col>
       </v-row>
