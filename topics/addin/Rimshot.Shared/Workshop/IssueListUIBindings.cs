@@ -3,6 +3,7 @@ using Autodesk.Navisworks.Api.DocumentParts;
 using CefSharp;
 using Speckle.Core.Api;
 using Speckle.Core.Credentials;
+using Speckle.Core.Logging;
 using Speckle.Core.Models;
 using Speckle.Core.Transports;
 using Speckle.Newtonsoft.Json;
@@ -22,6 +23,7 @@ using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
+using Stream = Speckle.Core.Api.Stream;
 
 namespace Rimshot.Shared.Workshop {
 
@@ -78,7 +80,20 @@ namespace Rimshot.Shared.Workshop {
 
     public virtual void AddImage () => this.SendIssueView();
 
-    public virtual void CommitSelection ( object payload ) => this.CommitSelectedObjectsToSpeckle( payload );
+    public virtual void CommitSelection ( object payload ) => CommitSelectedObjectsToSpeckle( payload );
+
+    private void RimshotError ( Exception err ) {
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine( err.Message.ToString() );
+      Console.ForegroundColor = ConsoleColor.Gray;
+
+      if ( err is SpeckleException ) {
+        NotifyUI( "error", new { message = err.Message } );
+        return;
+      }
+      throw err;
+    }
+
     public virtual string UpdateView ( string camera ) {
       Console.WriteLine( camera );
       return camera;
@@ -101,7 +116,26 @@ namespace Rimshot.Shared.Workshop {
 
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
+      if ( defaultAccount == null ) {
+        RimshotError( new SpeckleException( $"You do not have any account. Please create one or add it to the Speckle Manager." ) );
+        return;
+      }
+
+      Console.ForegroundColor = ConsoleColor.Blue;
+      Console.WriteLine( defaultAccount.userInfo.email.ToString() );
+      Console.WriteLine( defaultAccount.serverInfo.url.ToString() );
+      Console.ForegroundColor = ConsoleColor.Gray;
+
       Client client = new Client( defaultAccount );
+
+      try {
+        await client.StreamGet( streamId );
+      } catch {
+        RimshotError(
+        new SpeckleException(
+          $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ) );
+        return;
+      }
 
       // Get Branch and create if it doesn't exist.
       Branch branch;
@@ -110,20 +144,30 @@ namespace Rimshot.Shared.Workshop {
         if ( branch is null ) {
           branch = await CreateBranch( client, streamId, branchName, description );
         }
-      } catch ( Exception e ) {
-        NotifyUI( "error", new { message = e.Message } );
+      } catch ( Exception ) {
+        RimshotError( new SpeckleException( $"Unable to find or create an issue branch for {branchName}" ) );
+        return;
       }
 
-      branch = client.BranchGet( streamId, branchName, 1 ).Result;
+      try {
+        branch = client.BranchGet( streamId, branchName, 1 ).Result;
 
-      if ( branch != null ) {
-        NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
+        if ( branch != null ) {
+          NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
+        }
+      } catch ( Exception ) {
+        RimshotError( new SpeckleException( $"Unable to find an issue branch for {branchName}" ) );
+        return;
       }
 
       Document activeDocument = NavisworksApp.ActiveDocument;
       DocumentModels models = activeDocument.Models;
 
-      ModelItemCollection selectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
+      ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
+
+      // Were the selection to change mid-commit, accessing the selected set would fail.
+      ModelItemCollection selectedItems = new ModelItemCollection();
+      appSelectedItems.CopyTo( selectedItems );
 
       List<Base> translatedElements = new List<Base>();
 
@@ -178,7 +222,8 @@ namespace Rimshot.Shared.Workshop {
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
 
-      int descendantsCount = element.Descendants.Count();
+      //int descendantsCount = element.Descendants.Count();
+      int descendantsCount = element.Children.Count();
 
       if ( element.HasGeometry && descendantsCount == 0 ) {
         List<Objects.Geometry.Mesh> geometryToSpeckle = TranslateGeometry( element );
@@ -196,7 +241,8 @@ namespace Rimshot.Shared.Workshop {
       if ( descendantsCount > 0 ) {
         int c = 0;
         for ( int d = 0; d < descendantsCount; d++ ) {
-          ModelItem child = element.Descendants.ElementAt( d );
+          //ModelItem child = element.Descendants.ElementAt( d );
+          ModelItem child = element.Children.ElementAt( d );
           // TODO: work out a performant way to keep a progress UI element up to date.
           //NotifyUI( "nested-progress", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
           //Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
@@ -208,7 +254,7 @@ namespace Rimshot.Shared.Workshop {
             //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
             //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
             //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
+            //CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
           }
           children.Add( TranslateElement( child ) );
         }

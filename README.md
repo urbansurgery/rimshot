@@ -1,12 +1,8 @@
-# Rimshot
+<img src="https://user-images.githubusercontent.com/760691/173029738-0d8e4e7e-47f1-4bc4-a08c-16e72622dd65.png?raw=true" alt="logo" width="150"/>
 
-<img src="https://github.com/jsdbroughton/rimshot/blob/main/topics/addin/Rimshot.Shared/Images/logo.png?raw=true" alt="logo" width="200"/>
+# Rimshot<br />Realtime Issue Management with Speckle #
 
-## [R]ealtime [I]ssue [M]anagement with [S]peckle - HOT! 🔥
-
-[https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)
-
-## Premise ##
+<!-- [https://rimshot.app/](https://rimshot.app/issues/vWomnz77p44ZW4Hi350B)-->
 
 During the Great Lockdown of the last two years, in what has so quickly become a remote-working, online-first-meetings, broadcast only way of doing business. One really striking aspect of the AECO world, away from the Teams, Google Docs, Zoom and the like, was that the manner of Model Analysis and review has not been in the same class of technological delivery.
 
@@ -19,7 +15,7 @@ Utilising two aspects that I admire of Speckle:
 1. Information Hub and low-friction data transfer.
 2. Bring people to the Model. Speckle is multiplayer.
 
-[<img src="https://img.youtube.com/vi/1lUDgHJP7H4/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://youtu.be/5smZXGv7zXg)
+[<img src="https://img.youtube.com/vi/5smZXGv7zXg/maxresdefault.jpg" alt="logo" width="300"/><br />Watch the submission video](https://youtu.be/5smZXGv7zXg)
 
 [The XYZ project stream used in the demo](https://speckle.xyz/streams/cb23d07ec2)
 
@@ -93,7 +89,7 @@ The hackathon submission consists of:
 * Proper linking with Auth flow and project/stream selection.
 * Syncing of Comments between the two databases - near realtime.
 * More responsive syncing. Allow Speckle to push to the app (perhaps closing out issues, 3rd party commits)
-* Sorting out the 🔥HOT MESS🔥 of the Navisworks geometry translation.
+* ~~Sorting out the 🔥HOT MESS🔥 of the Navisworks geometry translation.~~
 <img src="https://user-images.githubusercontent.com/760691/168424674-539b5dd1-db83-4bdf-98aa-b4cfd2bc1d0e.png" alt="logo" width="500"/>
 
 * Integate the Speckle Viewer rather than embed views.
