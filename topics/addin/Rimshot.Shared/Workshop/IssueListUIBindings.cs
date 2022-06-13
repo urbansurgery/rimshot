@@ -3,6 +3,7 @@ using Autodesk.Navisworks.Api.DocumentParts;
 using CefSharp;
 using Speckle.Core.Api;
 using Speckle.Core.Credentials;
+using Speckle.Core.Logging;
 using Speckle.Core.Models;
 using Speckle.Core.Transports;
 using Speckle.Newtonsoft.Json;
@@ -22,6 +23,7 @@ using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
+using Stream = Speckle.Core.Api.Stream;
 
 namespace Rimshot.Shared.Workshop {
 
@@ -78,7 +80,20 @@ namespace Rimshot.Shared.Workshop {
 
     public virtual void AddImage () => this.SendIssueView();
 
-    public virtual void CommitSelection ( object payload ) => this.CommitSelectedObjectsToSpeckle( payload );
+    public virtual void CommitSelection ( object payload ) => CommitSelectedObjectsToSpeckle( payload );
+
+    private void RimshotError ( Exception err ) {
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine( err.Message.ToString() );
+      Console.ForegroundColor = ConsoleColor.Gray;
+
+      if ( err is SpeckleException ) {
+        NotifyUI( "error", new { message = err.Message } );
+        return;
+      }
+      throw err;
+    }
+
     public virtual string UpdateView ( string camera ) {
       Console.WriteLine( camera );
       return camera;
@@ -101,7 +116,26 @@ namespace Rimshot.Shared.Workshop {
 
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
+      if ( defaultAccount == null ) {
+        RimshotError( new SpeckleException( $"You do not have any account. Please create one or add it to the Speckle Manager." ) );
+        return;
+      }
+
+      Console.ForegroundColor = ConsoleColor.Blue;
+      Console.WriteLine( defaultAccount.userInfo.email.ToString() );
+      Console.WriteLine( defaultAccount.serverInfo.url.ToString() );
+      Console.ForegroundColor = ConsoleColor.Gray;
+
       Client client = new Client( defaultAccount );
+
+      try {
+        await client.StreamGet( streamId );
+      } catch {
+        RimshotError(
+        new SpeckleException(
+          $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ) );
+        return;
+      }
 
       // Get Branch and create if it doesn't exist.
       Branch branch;
@@ -110,11 +144,9 @@ namespace Rimshot.Shared.Workshop {
         if ( branch is null ) {
           branch = await CreateBranch( client, streamId, branchName, description );
         }
-      } catch ( Exception err ) {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine( err.Message.ToString() );
-        Console.ForegroundColor = ConsoleColor.Gray;
-        NotifyUI( "error", new { message = err.Message } );
+      } catch ( Exception ) {
+        RimshotError( new SpeckleException( $"Unable to find or create an issue branch for {branchName}" ) );
+        return;
       }
 
       try {
@@ -123,16 +155,19 @@ namespace Rimshot.Shared.Workshop {
         if ( branch != null ) {
           NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
         }
-      } catch ( Exception err ) {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine( err.Message.ToString() );
-        Console.ForegroundColor = ConsoleColor.Gray;
+      } catch ( Exception ) {
+        RimshotError( new SpeckleException( $"Unable to find an issue branch for {branchName}" ) );
+        return;
       }
 
       Document activeDocument = NavisworksApp.ActiveDocument;
       DocumentModels models = activeDocument.Models;
 
-      ModelItemCollection selectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
+      ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
+
+      // Were the selection to change mid-commit, accessing the selected set would fail.
+      ModelItemCollection selectedItems = new ModelItemCollection();
+      appSelectedItems.CopyTo( selectedItems );
 
       List<Base> translatedElements = new List<Base>();
 
