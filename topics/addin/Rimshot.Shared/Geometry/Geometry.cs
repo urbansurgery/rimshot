@@ -5,6 +5,8 @@ using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
 
 namespace Rimshot.Shared {
+
+  using Rimshot.Shared.ArrayExtensions;
   public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB {
     public List<double> Coords { get; set; }
 
@@ -94,9 +96,12 @@ namespace Rimshot.Shared {
   }
 
   public class NavisGeometry {
-    private ComApi.InwOpSelection ComSelection { get; set; }
-
+    public ComApi.InwOpSelection ComSelection { get; set; }
+    public ModelItem ModelItem { get; set; }
+    public Stack<ComApi.InwOaFragment3> ModelFragments { get; set; }
     public NavisGeometry ( ModelItem modelItem ) {
+
+      this.ModelItem = modelItem;
 
       // Add conversion geometry to oModelColl Property
       ModelItemCollection modelitemCollection = new ModelItemCollection {
@@ -106,6 +111,56 @@ namespace Rimshot.Shared {
       //convert to COM selection
       this.ComSelection = ComBridge.ToInwOpSelection( modelitemCollection );
     }
+
+    public List<CallbackGeomListener> GetUniqueFragments () {
+
+      List<CallbackGeomListener> callbackListeners = new List<CallbackGeomListener>();
+
+      foreach ( ComApi.InwOaPath path in this.ComSelection.Paths() ) {
+        CallbackGeomListener callbackListener = new CallbackGeomListener();
+        foreach ( ComApi.InwOaFragment3 fragment in this.ModelFragments ) {
+          Array a1 = ( ( Array )fragment.path.ArrayData ).ToArray<int>();
+          Array a2 = ( ( Array )path.ArrayData ).ToArray<int>();
+
+          // This is now lots of duplicate code!!
+          bool isSame = true;
+
+          if ( a1.Length == a2.Length ) {
+
+            for ( int i = 0; i < a1.Length; i += 1 ) {
+              int a1_value = ( int )a1.GetValue( i );
+              int a2_value = ( int )a2.GetValue( i );
+
+              if ( a1_value != a2_value ) {
+                isSame = false;
+                break;
+              }
+            }
+          } else {
+            isSame = false;
+          }
+
+          if ( isSame ) {
+            ComApi.InwLTransform3f3 localToWorld = ( ComApi.InwLTransform3f3 )( object )fragment.GetLocalToWorldMatrix();
+
+            //create Global Cordinate System Matrix
+            object matrix = localToWorld.Matrix;
+            Array matrix_array = ( Array )matrix;
+            double[] elements = ConvertArrayToDouble( matrix_array );
+            double[] elementsValue = new double[ elements.Length ];
+            for ( int i = 0; i < elements.Length; i++ ) {
+              elementsValue[ i ] = elements[ i ];
+            }
+
+            callbackListener.Matrix = elementsValue;
+            fragment.GenerateSimplePrimitives( ComApi.nwEVertexProperty.eNORMAL, callbackListener );
+          }
+        }
+        callbackListeners.Add( callbackListener );
+      }
+      return callbackListeners;
+    }
+
     public List<CallbackGeomListener> GetFragments () {
       List<CallbackGeomListener> callbackListeners = new List<CallbackGeomListener>();
       // create the callback object

@@ -10,11 +10,8 @@ using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Dynamic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,13 +20,16 @@ using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
-using Stream = Speckle.Core.Api.Stream;
+using Objects.Geometry;
+using Rimshot.Shared.ArrayExtensions;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Rimshot.Shared.Workshop {
-
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "http://192.168.86.29:8080/issues";
+    //const string rimshotUrl = "http://192.168.86.29:8080/issues";
+    const string rimshotUrl = "https://rimshot.app/issues";
 #else
     const String rimshotUrl = "https://rimshot.app/issues";
 #endif
@@ -41,6 +41,8 @@ namespace Rimshot.Shared.Workshop {
     public IWebBrowser Browser { get; set; }
 
     public IssueListPane Window { get; set; }
+    public DocumentModels Models { get => this.Models; set => this.Models = value; }
+
     private string image;
 
     // base64 encoding of the image
@@ -99,9 +101,15 @@ namespace Rimshot.Shared.Workshop {
       return camera;
     }
 
+    public Document ActiveDocument { get; set; }
+    private Vector3D TransformVector3D { get; set; }
+
+    private Objects.Geometry.Vector SettingOutPoint { get; set; }
+    private Objects.Geometry.Vector TransformVector { get; set; }
+
     private async void CommitSelectedObjectsToSpeckle ( object payload ) {
 
-      Console.WriteLine( "Commit Selection commenced." );
+      RimshotConsole( "Commit Selection commenced." );
 
       dynamic commitPayload = ( dynamic )payload;
 
@@ -110,9 +118,48 @@ namespace Rimshot.Shared.Workshop {
       string host = commitPayload.host;
       string issueId = commitPayload.issueId;
 
-      Console.WriteLine( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
+      GeometrySet.Clear();
+
+      RimshotConsole( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
 
       string description = $"issueId:{issueId}";
+
+      ActiveDocument = NavisworksApp.ActiveDocument;
+      DocumentModels documentModels = ActiveDocument.Models;
+
+      ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
+
+      // Were the selection to change mid-commit, accessing the selected set would fail.
+      ModelItemCollection selectedItems = new ModelItemCollection();
+      appSelectedItems.CopyTo( selectedItems );
+
+      if ( selectedItems.IsEmpty ) {
+        RimshotConsole( "Nothin Selected." );
+        NotifyUI( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
+        NotifyUI( "commit_sent", new { commit = "", issueId, stream = streamId, objectId = "" } );
+        return;
+      }
+
+      ModelItem firstItem = selectedItems.First();
+      ModelItem root = firstItem.Parent ?? firstItem;
+      ModelGeometry temp = root.FindFirstGeometry();
+
+      BoundingBox3D modelBoundingBox = temp.BoundingBox;
+      Point3D center = modelBoundingBox.Center;
+
+      TransformVector3D = new Vector3D( -center.X, -center.Y, 0 );
+
+      SettingOutPoint = new Objects.Geometry.Vector {
+        x = modelBoundingBox.Min.X,
+        y = modelBoundingBox.Min.Y,
+        z = 0
+      };
+
+      TransformVector = new Objects.Geometry.Vector {
+        x = -TransformVector3D.X,
+        y = -TransformVector3D.Y,
+        z = 0
+      };
 
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
@@ -121,10 +168,8 @@ namespace Rimshot.Shared.Workshop {
         return;
       }
 
-      Console.ForegroundColor = ConsoleColor.Blue;
-      Console.WriteLine( defaultAccount.userInfo.email.ToString() );
-      Console.WriteLine( defaultAccount.serverInfo.url.ToString() );
-      Console.ForegroundColor = ConsoleColor.Gray;
+      RimshotConsole( defaultAccount.serverInfo.url );
+      RimshotConsole( defaultAccount.userInfo.email );
 
       Client client = new Client( defaultAccount );
 
@@ -160,41 +205,65 @@ namespace Rimshot.Shared.Workshop {
         return;
       }
 
-      Document activeDocument = NavisworksApp.ActiveDocument;
-      DocumentModels models = activeDocument.Models;
-
-      ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
-
-      // Were the selection to change mid-commit, accessing the selected set would fail.
-      ModelItemCollection selectedItems = new ModelItemCollection();
-      appSelectedItems.CopyTo( selectedItems );
-
       List<Base> translatedElements = new List<Base>();
 
-      List<Base> Elements = new List<Base>();
+      ConcurrentStack<Base> Elements = new ConcurrentStack<Base>();
 
       int elementCount = selectedItems.Count;
-      //int c = 0;
+
+      // Iterate the selected elements regardless of their position in the tree
+      HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
+
+      ConcurrentDictionary<NavisGeometry, Boolean> geometryDict = new ConcurrentDictionary<NavisGeometry, Boolean>();
+
       for ( int e = 0; e < elementCount; e++ ) {
         ModelItem element = selectedItems[ e ];
-        // TODO: work out a performant way to keep a progress UI element up to date.
-        //NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        //Console.WriteLine( $"Elements: {e + 1}/{elementCount}" );double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
-        //double progress = ( ( double )e + 1 ) / ( double )elementCount * 100;
-        //int c2 = ( int )Math.Truncate( progress );
+        List<ModelItem> geometryNodes = CollectGeometryNodes( element );
 
-        //if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
-        //c = c2;
-        //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-        //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-        //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-        CommitStoreMutationUI( "SET_ELEMENT_PROGRESS", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        //}
-        Elements.Add( TranslateElement( element ) );
+        foreach ( ModelItem n in geometryNodes ) {
+          NavisGeometry g = new NavisGeometry( n );
+          geometryDict.TryAdd( g, true );
+        }
       }
 
+      ConcurrentStack<bool> doneElements = new ConcurrentStack<bool>();
+
+      List<Task> fragmentTasks = new List<Task>();
+      foreach ( KeyValuePair<NavisGeometry, bool> entry in geometryDict ) {
+        fragmentTasks.Add( Task.Run( () => {
+          AddFragments( entry.Key );
+          doneElements.Push( true );
+          RimshotConsole( $"{doneElements.Count} of {geometryDict.Count}", ConsoleColor.DarkGreen );
+        } ) );
+      }
+      Task t = Task.WhenAll( fragmentTasks );
+
+      t.Wait();
+
+      geometrySet.UnionWith( geometryDict.Keys );
+
+      List<Task> elementTasks = new List<Task>();
+      doneElements.Clear();
+      foreach ( NavisGeometry navisGeometry in geometrySet ) {
+        elementTasks.Add( Task.Run( () => {
+          Elements.Push( TranslateGeometryElement( navisGeometry ) );
+          doneElements.Push( true );
+          NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = doneElements.Count, count = geometrySet.Count } ) );
+          RimshotConsole( $"Element {doneElements.Count} of {geometrySet.Count}" );
+        } ) );
+      }
+
+      t = Task.WhenAll( elementTasks );
+      t.Wait();
+
+      RimshotConsole( "Build Commit Object" );
       Base myCommit = new Base();
-      myCommit[ "@Elements" ] = Elements;
+      myCommit[ "@Elements" ] = Elements.ToList();
+
+      myCommit[ "TransformVector" ] = TransformVector;
+      myCommit[ "Real World Coordinates" ] = SettingOutPoint;
+
+      myCommit[ "bbox" ] = BoxToSpeckle( selectedItems.BoundingBox() );
 
       string[] stringseparators = new string[] { "/" };
       myCommit[ "Issue Number" ] = branchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
@@ -202,6 +271,7 @@ namespace Rimshot.Shared.Workshop {
       ServerTransport transport = new ServerTransport( defaultAccount, streamId );
       string hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
 
+      RimshotConsole( "Commit Create" );
       string commitId = client.CommitCreate( new CommitCreateInput() {
         branchName = branchName,
         message = "Rimshot issue commit.",
@@ -213,11 +283,99 @@ namespace Rimshot.Shared.Workshop {
       Commit commitObject = client.CommitGet( streamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
+      RimshotConsole( "Commit Sent" );
       NotifyUI( "commit_sent", new { commit = commitId, issueId, stream = streamId, objectId = referencedObject } );
 
       client.Dispose();
     }
 
+    private static void RimshotConsole ( string message, ConsoleColor color = ConsoleColor.Blue ) {
+      Console.ForegroundColor = color;
+      Console.WriteLine( message );
+      Console.ForegroundColor = ConsoleColor.Gray;
+    }
+
+    public Dictionary<int[], Stack<ComApi.InwOaFragment3>> pathDictionary = new Dictionary<int[], Stack<ComApi.InwOaFragment3>>();
+    public Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>> modelGeometryDictionary = new Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>>();
+    public HashSet<NavisGeometry> GeometrySet = new HashSet<NavisGeometry>();
+
+    public void AddFragments ( NavisGeometry geometry ) {
+
+      geometry.ModelFragments = new Stack<ComApi.InwOaFragment3>();
+
+      foreach ( ComApi.InwOaPath path in geometry.ComSelection.Paths() ) {
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+
+          int[] a1 = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          int[] a2 = ( ( Array )path.ArrayData ).ToArray<int>();
+          bool isSame = true;
+
+          if ( a1.Length != a2.Length || !Enumerable.SequenceEqual( a1, a2 ) ) {
+            isSame = false;
+          }
+
+          if ( isSame ) {
+            geometry.ModelFragments.Push( frag );
+          }
+        }
+      }
+    }
+
+    public void GetSortedFragments ( ModelItemCollection modelItems ) {
+      ComApi.InwOpSelection oSel = ComBridge.ToInwOpSelection( modelItems );
+      // To be most efficient you need to lookup an efficient EqualityComparer
+      // for the int[] key
+      foreach ( ComApi.InwOaPath3 path in oSel.Paths() ) {
+        // this yields ONLY unique fragments
+        // ordered by geometry they belong to
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+          int[] pathArr = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          if ( !this.pathDictionary.TryGetValue( pathArr, out Stack<ComApi.InwOaFragment3> frags ) ) {
+            frags = new Stack<ComApi.InwOaFragment3>();
+            this.pathDictionary[ pathArr ] = frags;
+          }
+          frags.Push( frag );
+        }
+      }
+    }
+
+    /// <summary>
+    /// Parse all descendant nodes of the element that are geometry nodes.
+    /// </summary>
+    public List<ModelItem> CollectGeometryNodes ( ModelItem element ) {
+      ModelItemEnumerableCollection descendants = element.DescendantsAndSelf;
+      ModelItemCollection geometryElements = new ModelItemCollection();
+
+      return ( from item in descendants where item.HasGeometry && !item.IsHidden select item ).ToList();
+    }
+    public Base TranslateGeometryElement ( NavisGeometry geometryElement ) {
+      Base elementBase = new Base();
+
+      if ( geometryElement.ModelItem.HasGeometry && geometryElement.ModelItem.Children.Count() == 0 ) {
+        List<Base> speckleGeometries = TranslateFragmentGeometry( geometryElement );
+        if ( speckleGeometries.Count > 0 ) {
+          elementBase[ "displayValue" ] = speckleGeometries;
+          elementBase[ "units" ] = "m";
+          elementBase[ "bbox" ] = BoxToSpeckle( geometryElement.ModelItem.BoundingBox() );
+        }
+      }
+      return elementBase;
+    }
+
+    private Box BoxToSpeckle ( BoundingBox3D boundingBox3D ) {
+      Box boundingBox = new Box();
+
+      double scale = 0.001; // TODO: Proper units support.
+
+      Point3D min = boundingBox3D.Min;
+      Point3D max = boundingBox3D.Max;
+
+      boundingBox.xSize = new Objects.Primitive.Interval( min.X * scale, max.X * scale );
+      boundingBox.ySize = new Objects.Primitive.Interval( min.Y * scale, max.Y * scale );
+      boundingBox.zSize = new Objects.Primitive.Interval( min.Z * scale, max.Z * scale );
+
+      return boundingBox;
+    }
 
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
@@ -239,23 +397,9 @@ namespace Rimshot.Shared.Workshop {
       List<Base> children = new List<Base>();
 
       if ( descendantsCount > 0 ) {
-        int c = 0;
         for ( int d = 0; d < descendantsCount; d++ ) {
-          //ModelItem child = element.Descendants.ElementAt( d );
           ModelItem child = element.Children.ElementAt( d );
           // TODO: work out a performant way to keep a progress UI element up to date.
-          //NotifyUI( "nested-progress", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
-          //Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
-          double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
-          int c2 = ( int )Math.Truncate( progress );
-
-          if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
-            c = c2;
-            //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-            //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            //CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
-          }
           children.Add( TranslateElement( child ) );
         }
         elementBase[ "@Elements" ] = children;
@@ -301,7 +445,7 @@ namespace Rimshot.Shared.Workshop {
 
           if ( propValue != null ) {
 
-            var keyPropValue = propertyCategoryBase[ key ];
+            object keyPropValue = propertyCategoryBase[ key ];
 
             if ( keyPropValue == null ) {
               propertyCategoryBase[ key ] = propValue;
@@ -311,9 +455,10 @@ namespace Rimshot.Shared.Workshop {
               propertyCategoryBase[ key ] = arrayPropValue;
             } else {
               dynamic existingValue = keyPropValue;
-              List<dynamic> arrayPropValue = new List<dynamic>();
-              arrayPropValue.Add( existingValue );
-              arrayPropValue.Add( propValue );
+              List<dynamic> arrayPropValue = new List<dynamic> {
+                existingValue,
+                propValue
+              };
               propertyCategoryBase[ key ] = arrayPropValue;
             }
 
@@ -347,6 +492,60 @@ namespace Rimshot.Shared.Workshop {
       return cleanName;
     }
 
+    public List<Base> TranslateFragmentGeometry ( NavisGeometry navisGeometry ) {
+      List<Shared.CallbackGeomListener> callbackListeners = navisGeometry.GetUniqueFragments();
+
+      List<Base> baseGeometries = new List<Base>();
+
+      foreach ( Shared.CallbackGeomListener callback in callbackListeners ) {
+        List<NavisDoubleTriangle> Triangles = callback.Triangles;
+        // TODO: Additional Geometry Types
+        //List<NavisDoubleLine> Lines = callback.Lines;
+        //List<NavisDoublePoint> Points = callback.Points;
+
+        List<double> vertices = new List<double>();
+        List<int> faces = new List<int>();
+
+        Vector3D move = this.TransformVector3D;
+
+        int triangleCount = Triangles.Count;
+        if ( triangleCount > 0 ) {
+
+          for ( int t = 0; t < triangleCount; t += 1 ) {
+            double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
+
+            // Apply the bounding box move.
+            // The native API methods for overriding transforms are not thread safe to call from the CEF instance
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex1.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex1.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex1.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex2.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex2.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex2.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex3.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex3.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex3.Z + move.Z ) * scale
+            } );
+
+            // TODO: Move this back to Geometry.cs
+            faces.Add( 0 );
+            faces.Add( t * 3 );
+            faces.Add( t * 3 + 1 );
+            faces.Add( t * 3 + 2 );
+          }
+          Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( vertices, faces );
+          baseMesh[ "renderMaterial" ] = TranslateMaterial( navisGeometry.ModelItem );
+          baseGeometries.Add( baseMesh );
+        }
+      }
+      return baseGeometries; // TODO: Check if this actually has geometries before adding to DisplayValue
+    }
+
     public List<Objects.Geometry.Mesh> TranslateGeometry ( ModelItem geom ) { // TODO: This should move to Geometry.cs or Conversions.cs
 
       NavisGeometry navisGeometry = new NavisGeometry( geom );
@@ -362,8 +561,6 @@ namespace Rimshot.Shared.Workshop {
         int triangleCount = Triangles.Count;
 
         if ( triangleCount > 0 ) {
-          //Console.WriteLine( $"Triangles: {triangleCount}" );
-
           int c = 0;
           for ( int t = 0; t < triangleCount; t += 1 ) {
 
@@ -373,9 +570,6 @@ namespace Rimshot.Shared.Workshop {
 
             if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
               c = c2;
-              //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-              //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-              //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
               CommitStoreMutationUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
             }
             double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
@@ -431,7 +625,6 @@ namespace Rimshot.Shared.Workshop {
 
       return branch;
     }
-
     private void SendIssueView () {
 
       MemoryStream stream;
