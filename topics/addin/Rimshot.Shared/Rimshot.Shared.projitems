@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Collections\ObservableCollections.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\ArrayExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\IssueConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\TreeConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Converters\VisibConverter.cs" />
@@ -73,5 +74,8 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Extensions\" />
   </ItemGroup>
 </Project>
