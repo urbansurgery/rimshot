@@ -14,4 +14,8 @@
   public class ShowAlso {
     public const string Command = "Rimshot_Button_ShowAlsoSelected";
   }
+  public class Speckle {
+    //public const string Plugin = "Rimshot.SpecklePlugin";
+    public const string Command = "Rimshot_Button_ShowSpeckleUI";
+  }
 }

@@ -11,17 +11,26 @@ namespace Rimshot.Shared {
   [RibbonLayout( "Ribbon.xaml" )]
   [RibbonTab( "Rimshot", DisplayName = "Rimshot", LoadForCanExecute = true )]
 
-
-
   [Command( Tools.IssueList.Command,
              CallCanExecute = CallCanExecute.DocumentNotClear,
-             Icon = "rimshot16.ico",
-             LargeIcon = "rimshot32.ico",
-             Shortcut = "Ctrl+Shift+O",
+             Icon = "icon_register16.ico",
+             LargeIcon = "icon_register32.ico",
+             Shortcut = "Ctrl+Shift+R",
              ShortcutWindowTypes = "",
-             ToolTip = "Show Issue List",
-             ExtendedToolTip = "Show Issue List",
-             DisplayName = "Rimshot"
+             ToolTip = "Show Rimshot ",
+             ExtendedToolTip = "Show Rimshot Issue List",
+             DisplayName = "Register"
+             )]
+
+  [Command( Tools.Speckle.Command,
+             CallCanExecute = CallCanExecute.DocumentNotClear,
+             Icon = "icon_speckle16.ico",
+             LargeIcon = "icon_speckle32.ico",
+             Shortcut = "Ctrl+Shift+S",
+             ShortcutWindowTypes = "",
+             ToolTip = "Show Speckle Connector",
+             ExtendedToolTip = "Show Speckle Connector",
+             DisplayName = "Speckle"
              )]
 
 

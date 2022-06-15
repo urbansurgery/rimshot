@@ -9,11 +9,11 @@
     xmlns:tools="clr-namespace:Rimshot.Tools;assembly=Rimshot.Rimshot">
     <RibbonTab Id="Rimshot" KeyTip="GR">
 
-
         <!-- WORKSHOP -->
         <RibbonPanel x:Uid="RibbonPanel_Workshop">
-            <RibbonPanelSource  Id="RibbonPanelSource_RibbonPanel_Workshop" x:Uid="RibbonPanelSource_RibbonPanel_Workshop" KeyTip="FM" Title="Workshop">
-                <gui:NWRibbonButton x:Uid="Button_Workshop_ShowIssueList" IsVisible="False" Id="{x:Static tools:IssueList.Command}" Size="Large" KeyTip="S" ShowText="True" Orientation="Vertical" />
+            <RibbonPanelSource  Id="RibbonPanelSource_RibbonPanel_Workshop" x:Uid="RibbonPanelSource_RibbonPanel_Workshop" KeyTip="RM" Title="Rimshot">
+                <gui:NWRibbonButton x:Uid="Button_Workshop_ShowIssueList" IsVisible="False" Id="{x:Static tools:IssueList.Command}" Size="Large" KeyTip="R" ShowText="True" Orientation="Vertical" />
+                <gui:NWRibbonButton x:Uid="Button_Speckle_ShowSpeckleUI" IsVisible="False" Id="{x:Static tools:Speckle.Command}" Size="Large" KeyTip="S" ShowText="True" Orientation="Vertical" />
             </RibbonPanelSource>
         </RibbonPanel>
 

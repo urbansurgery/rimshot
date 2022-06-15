@@ -6,7 +6,7 @@ namespace Rimshot.Shared.Workshop.IssueList {
 
   #region WebViewPlugin
 
-  [Plugin( Tools.IssueList.Plugin, "Rimshot", DisplayName = "Issue List", ToolTip = "Workshop Issue List Management" )]
+  [Plugin( Tools.IssueList.Plugin, "Rimshot", DisplayName = "Register", ToolTip = "Workshop Issue List Management" )]
   [DockPanePlugin( 400, 400, FixedSize = false )]
 
   class WebViewPlugin : DockPanePlugin {
