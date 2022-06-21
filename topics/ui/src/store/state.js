@@ -19,7 +19,7 @@ export default {
   commitGeometry: 0,
 };
 
-const templates = {
+export const templates = {
   project: {
     archived: false,
     host: 'speckle.xyz',

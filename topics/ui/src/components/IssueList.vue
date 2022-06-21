@@ -23,10 +23,8 @@
         workshops: (state) => state.workshops,
         packageVersion: (state) => state.packageVersion,
         activeIssue: (state) => state.activeIssue,
+        isEmbedded: (state) => state.isEmbedded,
       }),
-      isEmbedded() {
-        return this.$store.state.isEmbedded;
-      },
       route() {
         return this.$route.name;
       },

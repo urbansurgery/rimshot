@@ -251,6 +251,9 @@
       },
     },
     watch: {},
+    mounted: function () {
+      // console.log(this.issue);
+    },
 
     methods: {
       selectIssue() {

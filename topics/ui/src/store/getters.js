@@ -4,16 +4,6 @@ export default {
       (project) => project.archived != true && project.live === true
     );
   },
-  selectedWorkshops: function (state) {
-    return (id) => {
-      const workshops = state.workshops;
-      const project = state.projects.filter((project) => project.id === id)[0];
-
-      return workshops.filter(
-        (workshop) => workshop?.project?.key === project?.key
-      );
-    };
-  },
   singleWorkshopDetails: function (state) {
     return (id) => {
       if (!id) return;
