@@ -3,30 +3,33 @@
   "folders": [
     {
       "path": "./topics/ui",
-      "name": "Frontends"
+      "name": "🖥  Frontends"
     },
     {
       "path": "./topics/functions",
-      "name": "Cloud Functions"
+      "name": "🌥  Cloud Functions"
     },
     {
       "path": "./topics/addin",
-      "name": "Addin",
+      "name": "🔌  Addin",
       "exclude": [
         "./**/dud/**"
       ]
     },
     {
       "path": "./configuration",
-      "name": "Configuration"
+      "name": "💫  Configuration"
     },
     {
       "path": "./topics/common",
-      "name": "Common"
+      "name": "👯‍♂️  Common"
+    },    {
+      "path": "./topics/extension",
+      "name": "👽  Chrome Extension"
     },
     {
       "path": ".",
-      "name": "Root"
+      "name": " 🦷  Root"
     }
   ],
   "settings": {

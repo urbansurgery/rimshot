@@ -1,0 +1,11 @@
+{
+  "name": "Rimshot",
+  "description": "Augments the Speckle Viewer allowing access to Rimshot issue metadata within your Speckle server UI.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/50.png",
+    "128": "icons/128.png"
+  }
+}
