@@ -10,20 +10,16 @@ using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Dynamic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using Color = System.Drawing.Color;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
-using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
+using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
-using Stream = Speckle.Core.Api.Stream;
 
 namespace Rimshot.Shared.Workshop {
 
