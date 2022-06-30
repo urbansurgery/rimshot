@@ -55,7 +55,7 @@ namespace Rimshot.Shared.Workshop {
       try {
         Browser.GetMainFrame().EvaluateScriptAsync( script );
       } catch ( Exception e ) {
-        Console.WriteLine( e.Message );
+        Logging.ErrorLog( e.Message );
       }
     }
 
@@ -64,7 +64,7 @@ namespace Rimshot.Shared.Workshop {
       try {
         Browser.GetMainFrame().EvaluateScriptAsync( script );
       } catch ( Exception e ) {
-        Console.WriteLine( e.Message );
+        Logging.ErrorLog( e.Message );
       }
     }
 
@@ -78,26 +78,20 @@ namespace Rimshot.Shared.Workshop {
 
     public virtual void CommitSelection ( object payload ) => CommitSelectedObjectsToSpeckle( payload );
 
-    private void RimshotError ( Exception err ) {
-      Console.ForegroundColor = ConsoleColor.Red;
-      Console.WriteLine( err.Message.ToString() );
-      Console.ForegroundColor = ConsoleColor.Gray;
-
-      if ( err is SpeckleException ) {
-        NotifyUI( "error", new { message = err.Message } );
-        return;
-      }
-      throw err;
-    }
 
     public virtual string UpdateView ( string camera ) {
-      Console.WriteLine( camera );
+      Logging.ConsoleLog( camera );
       return camera;
     }
 
-    private async void CommitSelectedObjectsToSpeckle ( object payload ) {
+    /// <summary>
+    /// Adds an hierarchical object based on the current selection and commits to the selected issue Branch. If no branch exists, one is created.
+    /// </summary>
+    /// <param name="payload"></param>
+    /// <param name="commitMessage">Allows for the calling UI to override this and include a custom commit message.</param>
+    private async void CommitSelectedObjectsToSpeckle ( object payload, string commitMessage = "Rimshot commit." ) {
 
-      Console.WriteLine( "Commit Selection commenced." );
+      Logging.ConsoleLog( "Commit Selection commenced." );
 
       dynamic commitPayload = ( dynamic )payload;
 
@@ -106,30 +100,29 @@ namespace Rimshot.Shared.Workshop {
       string host = commitPayload.host;
       string issueId = commitPayload.issueId;
 
-      Console.WriteLine( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
+      UIBindings app = this;
+      Logging.ConsoleLog( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
 
       string description = $"issueId:{issueId}";
 
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
       if ( defaultAccount == null ) {
-        RimshotError( new SpeckleException( $"You do not have any account. Please create one or add it to the Speckle Manager." ) );
+        Logging.ErrorLog( new SpeckleException( $"You do not have any account. Please create one or add it to the Speckle Manager." ), app );
         return;
       }
 
-      Console.ForegroundColor = ConsoleColor.Blue;
-      Console.WriteLine( defaultAccount.userInfo.email.ToString() );
-      Console.WriteLine( defaultAccount.serverInfo.url.ToString() );
-      Console.ForegroundColor = ConsoleColor.Gray;
+      Logging.ConsoleLog( defaultAccount.userInfo.email.ToString() );
+      Logging.ConsoleLog( defaultAccount.serverInfo.url.ToString() );
 
       Client client = new Client( defaultAccount );
 
       try {
         await client.StreamGet( streamId );
       } catch {
-        RimshotError(
+        Logging.ErrorLog(
         new SpeckleException(
-          $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ) );
+          $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ), app );
         return;
       }
 
@@ -141,7 +134,7 @@ namespace Rimshot.Shared.Workshop {
           branch = await CreateBranch( client, streamId, branchName, description );
         }
       } catch ( Exception ) {
-        RimshotError( new SpeckleException( $"Unable to find or create an issue branch for {branchName}" ) );
+        Logging.ErrorLog( new SpeckleException( $"Unable to find or create an issue branch for {branchName}" ), app );
         return;
       }
 
@@ -152,7 +145,7 @@ namespace Rimshot.Shared.Workshop {
           NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = branch.name, issueId } ) );
         }
       } catch ( Exception ) {
-        RimshotError( new SpeckleException( $"Unable to find an issue branch for {branchName}" ) );
+        Logging.ErrorLog( new SpeckleException( $"Unable to find an issue branch for {branchName}" ), app );
         return;
       }
 
@@ -170,22 +163,10 @@ namespace Rimshot.Shared.Workshop {
       List<Base> Elements = new List<Base>();
 
       int elementCount = selectedItems.Count;
-      //int c = 0;
+
       for ( int e = 0; e < elementCount; e++ ) {
         ModelItem element = selectedItems[ e ];
-        // TODO: work out a performant way to keep a progress UI element up to date.
-        //NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        //Console.WriteLine( $"Elements: {e + 1}/{elementCount}" );double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
-        //double progress = ( ( double )e + 1 ) / ( double )elementCount * 100;
-        //int c2 = ( int )Math.Truncate( progress );
-
-        //if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
-        //c = c2;
-        //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-        //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-        //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
         CommitStoreMutationUI( "SET_ELEMENT_PROGRESS", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        //}
         Elements.Add( TranslateElement( element ) );
       }
 
@@ -200,7 +181,7 @@ namespace Rimshot.Shared.Workshop {
 
       string commitId = client.CommitCreate( new CommitCreateInput() {
         branchName = branchName,
-        message = "Rimshot issue commit.",
+        message = commitMessage,
         objectId = hash,
         streamId = streamId,
         sourceApplication = "Rimshot"
@@ -218,17 +199,13 @@ namespace Rimshot.Shared.Workshop {
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
 
-      //int descendantsCount = element.Descendants.Count();
       int descendantsCount = element.Children.Count();
 
       if ( element.HasGeometry && descendantsCount == 0 ) {
         List<Objects.Geometry.Mesh> geometryToSpeckle = TranslateGeometry( element );
         if ( geometryToSpeckle.Count > 0 ) {
           elementBase[ "displayValue" ] = geometryToSpeckle;
-
-          // TODO: this needs to reflect model reality it will be a property of the ActiveDocument no doubt.
-          // Or perhaps always target metres and convert appropriately
-          elementBase[ "units" ] = "m";
+          elementBase[ "units" ] = NavisworksApp.ActiveDocument.Units;
         }
       }
 
@@ -237,20 +214,12 @@ namespace Rimshot.Shared.Workshop {
       if ( descendantsCount > 0 ) {
         int c = 0;
         for ( int d = 0; d < descendantsCount; d++ ) {
-          //ModelItem child = element.Descendants.ElementAt( d );
           ModelItem child = element.Children.ElementAt( d );
-          // TODO: work out a performant way to keep a progress UI element up to date.
-          //NotifyUI( "nested-progress", JsonConvert.SerializeObject( new { current = c + 1, count = descendantsCount } ) );
-          //Console.WriteLine( $"Nested: {c + 1}/{descendantsCount}" );
           double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
           int c2 = ( int )Math.Truncate( progress );
 
           if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
             c = c2;
-            //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-            //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-            //CommitStoreMutationUI( "SET_NESTED_PROGRESS", JsonConvert.SerializeObject( new { current = d + 1, count = descendantsCount } ) );
           }
           children.Add( TranslateElement( child ) );
         }
@@ -273,7 +242,7 @@ namespace Rimshot.Shared.Workshop {
 
             key = SanitizePropertyName( property.DisplayName.ToString() );
           } catch ( Exception err ) {
-            Console.WriteLine( $"Property Name not converted. {err.Message}" );
+            Logging.ErrorLog( $"Property Name not converted. {err.Message}" );
             break;
           }
 
@@ -297,7 +266,7 @@ namespace Rimshot.Shared.Workshop {
 
           if ( propValue != null ) {
 
-            var keyPropValue = propertyCategoryBase[ key ];
+            object keyPropValue = propertyCategoryBase[ key ];
 
             if ( keyPropValue == null ) {
               propertyCategoryBase[ key ] = propValue;
@@ -307,9 +276,10 @@ namespace Rimshot.Shared.Workshop {
               propertyCategoryBase[ key ] = arrayPropValue;
             } else {
               dynamic existingValue = keyPropValue;
-              List<dynamic> arrayPropValue = new List<dynamic>();
-              arrayPropValue.Add( existingValue );
-              arrayPropValue.Add( propValue );
+              List<dynamic> arrayPropValue = new List<dynamic> {
+                existingValue,
+                propValue
+              };
               propertyCategoryBase[ key ] = arrayPropValue;
             }
 
@@ -358,7 +328,6 @@ namespace Rimshot.Shared.Workshop {
         int triangleCount = Triangles.Count;
 
         if ( triangleCount > 0 ) {
-          //Console.WriteLine( $"Triangles: {triangleCount}" );
 
           int c = 0;
           for ( int t = 0; t < triangleCount; t += 1 ) {
@@ -369,9 +338,6 @@ namespace Rimshot.Shared.Workshop {
 
             if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
               c = c2;
-              //Console.WriteLine( $"{progress} : { Math.Truncate( progress ) } : { Math.Round( progress ) % 10 }" );
-              //DispatchStoreActionUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
-              //NotifyUI( "geometry-progress", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
               CommitStoreMutationUI( "SET_GEOMETRY_PROGRESS", JsonConvert.SerializeObject( new { current = t + 1, count = triangleCount } ) );
             }
             double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
