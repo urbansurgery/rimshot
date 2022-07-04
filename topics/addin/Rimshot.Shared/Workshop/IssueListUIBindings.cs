@@ -8,6 +8,7 @@ using Speckle.Core.Models;
 using Speckle.Core.Transports;
 using Speckle.Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -21,16 +22,19 @@ using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
+using Rimshot.Shared.ArrayExtensions;
+using Objects.Geometry;
+
 namespace Rimshot.Shared.Workshop {
 
   public abstract class UIBindings {
 #if DEBUG
-    const string rimshotUrl = "http://192.168.86.29:8080/issues";
+    //const string rimshotUrl = "http://192.168.86.29:8080/issues";
+    const string rimshotUrl = "https://rimshot.app/issues";
 #else
-    const String rimshotUrl = "https://rimshot.app/issues";
+    const string rimshotUrl = "https://rimshot.app/issues";
 #endif
     public const string Url = rimshotUrl;
-    private const int V = 131004;
     private const int Modulo = 5;
     private string _tempFolder = "";
 
@@ -84,6 +88,18 @@ namespace Rimshot.Shared.Workshop {
       return camera;
     }
 
+    public Document ActiveDocument { get; set; }
+    private Vector3D TransformVector3D { get; set; }
+    private Objects.Geometry.Vector SettingOutPoint { get; set; }
+    private Objects.Geometry.Vector TransformVector { get; set; }
+
+    public Dictionary<int[], Stack<ComApi.InwOaFragment3>> pathDictionary = new Dictionary<int[], Stack<ComApi.InwOaFragment3>>();
+    public Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>> modelGeometryDictionary = new Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>>();
+    public HashSet<NavisGeometry> GeometrySet = new HashSet<NavisGeometry>();
+
+    private ModelItemCollection selectedItems = new ModelItemCollection();
+    private readonly ModelItemCollection selectedItemsAndDescendants = new ModelItemCollection();
+
     /// <summary>
     /// Adds an hierarchical object based on the current selection and commits to the selected issue Branch. If no branch exists, one is created.
     /// </summary>
@@ -99,6 +115,9 @@ namespace Rimshot.Shared.Workshop {
       string streamId = commitPayload.stream;
       string host = commitPayload.host;
       string issueId = commitPayload.issueId;
+
+      GeometrySet.Clear();
+
 
       UIBindings app = this;
       Logging.ConsoleLog( $"Stream: {streamId}, Host: {host}, Branch: {branchName}, Issue: {issueId}" );
@@ -120,9 +139,7 @@ namespace Rimshot.Shared.Workshop {
       try {
         await client.StreamGet( streamId );
       } catch {
-        Logging.ErrorLog(
-        new SpeckleException(
-          $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ), app );
+        Logging.ErrorLog( new SpeckleException( $"You don't have access to stream {streamId} on server {host}, or the stream does not exist." ), app );
         return;
       }
 
@@ -149,29 +166,136 @@ namespace Rimshot.Shared.Workshop {
         return;
       }
 
-      Document activeDocument = NavisworksApp.ActiveDocument;
-      DocumentModels models = activeDocument.Models;
-
+      // Current document, models and selected elements.
+      ActiveDocument = NavisworksApp.ActiveDocument;
+      DocumentModels documentModels = ActiveDocument.Models;
       ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
 
       // Were the selection to change mid-commit, accessing the selected set would fail.
-      ModelItemCollection selectedItems = new ModelItemCollection();
-      appSelectedItems.CopyTo( selectedItems );
 
+      appSelectedItems.CopyTo( selectedItems );
+      appSelectedItems.DescendantsAndSelf.CopyTo( selectedItemsAndDescendants );
+
+      if ( selectedItems.IsEmpty ) {
+        Logging.ConsoleLog( "Nothing Selected." );
+        NotifyUI( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
+        NotifyUI( "commit_sent", new { commit = "", issueId, stream = streamId, objectId = "" } );
+        return;
+      }
+
+      // Setup Setting Out Location and translation
+      ModelItem firstItem = selectedItems.First();
+      ModelItem root = firstItem.Parent ?? firstItem;
+      ModelGeometry temp = root.FindFirstGeometry();
+
+      BoundingBox3D modelBoundingBox = temp.BoundingBox;
+      Point3D center = modelBoundingBox.Center;
+
+      TransformVector3D = new Vector3D( -center.X, -center.Y, 0 ); // 2D translation parallel to world XY
+
+      SettingOutPoint = new Objects.Geometry.Vector {
+        x = modelBoundingBox.Min.X,
+        y = modelBoundingBox.Min.Y,
+        z = 0
+      };
+
+      TransformVector = new Objects.Geometry.Vector {
+        x = 0 - TransformVector3D.X,
+        y = 0 - TransformVector3D.Y,
+        z = 0
+      };
+
+
+      // This will be the Elements for the commit.
       List<Base> translatedElements = new List<Base>();
 
-      List<Base> Elements = new List<Base>();
+      // Thread safe collections
+      // Iterate the selected elements regardless of their position in the tree.
+      HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
+
+      HashSet<ModelItem> firstObjectsInSelection = new HashSet<ModelItem>();
+      ConcurrentStack<Base> UniqueGeometryNodes = new ConcurrentStack<Base>();
+      ConcurrentDictionary<NavisGeometry, Boolean> geometryDict = new ConcurrentDictionary<NavisGeometry, bool>();
+      ConcurrentDictionary<ModelItem, NavisGeometry> geometryNodeMap = new ConcurrentDictionary<ModelItem, NavisGeometry>();
 
       int elementCount = selectedItems.Count;
 
       for ( int e = 0; e < elementCount; e++ ) {
+
         ModelItem element = selectedItems[ e ];
-        CommitStoreMutationUI( "SET_ELEMENT_PROGRESS", JsonConvert.SerializeObject( new { current = e + 1, count = elementCount } ) );
-        Elements.Add( TranslateElement( element ) );
+        List<ModelItem> geometryNodes = CollectGeometryNodes( element ); // All relevant geometry nodes as children of whatever is selected.
+
+        foreach ( ModelItem n in geometryNodes ) {
+          NavisGeometry g = new NavisGeometry( n );
+          bool addedGeometry = geometryDict.TryAdd( g, true );
+          geometryNodeMap.TryAdd( n, g );
+        }
       }
 
+      ConcurrentStack<bool> doneElements = new ConcurrentStack<bool>();
+
+      List<Task> fragmentTasks = new List<Task>();
+      foreach ( KeyValuePair<NavisGeometry, bool> entry in geometryDict ) {
+        fragmentTasks.Add( Task.Run( () => {
+          AddFragments( entry.Key );
+          doneElements.Push( true );
+          Logging.ConsoleLog( $"{doneElements.Count} of {geometryDict.Count}", ConsoleColor.DarkGreen );
+        } ) );
+      }
+      Task t = Task.WhenAll( fragmentTasks );
+
+      t.Wait();
+
+      // Builds the geometries of interest.
+      //geometrySet.UnionWith( geometryDict.Keys );
+
+      //List<Task> translateGeometryTasks = new List<Task>();
+      //doneElements.Clear();
+
+      List<NavisGeometry> keyList = geometryDict.Keys.ToList();
+      for ( int n = 0; n < keyList.Count; n++ ) {
+        NavisGeometry navisGeometry = keyList[ n ];
+        //foreach ( NavisGeometry navisGeometry in geometryDict.Keys ) {
+        //translateGeometryTasks.Add( Task.Run( () => {
+        // Do the geometry conversion work.
+        TranslateGeometryElement( navisGeometry );
+
+        // Do the properties and hierarchy conversion work.
+        TranslateHierarchyElement( navisGeometry );
+
+        //doneElements.Push( true );
+        NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = doneElements.Count, count = geometrySet.Count } ) );
+        Logging.ConsoleLog( $"Element {n} of {geometryDict.Keys.Count}" );
+        //} ) 
+        //);
+      }
+
+      //t = Task.WhenAll( translateGeometryTasks );
+      //t.Wait();
+      // At this point we have a Dict with unique selected geometry nodes. These don't reflect the Object hierarchy.
+
+
+
+
+
+      // For each Geometry node now:
+      // Navigate up the tree to find the FirstObject Ancestor. (If none, the geometry node is the first object.
+      // The First Objects can then be traversed downward, nesting objects as we go.
+      // When a child is a geometry child, we already have that node isolated.
+      // Properties are then populated per branch child. (Property Categories + Geometry + ???) to "Parameters"
+      // Properties of the ancestors of a FirstObject can be added directly to the FirstObject Base aggregating into lists if necessary
+
       Base myCommit = new Base();
+
+      List<Base> Elements = new List<Base>();
+      foreach ( var e in geometryDict.Keys ) {
+        Elements.Add( e.Base );
+      }
+
+
       myCommit[ "@Elements" ] = Elements;
+
+      this.selectedItems.Clear();
 
       string[] stringseparators = new string[] { "/" };
       myCommit[ "Issue Number" ] = branchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
@@ -195,6 +319,331 @@ namespace Rimshot.Shared.Workshop {
       client.Dispose();
     }
 
+    public void TranslateHierarchyElement ( NavisGeometry geometrynode ) {
+
+      ModelItem firstObject = geometrynode.ModelItem.FindFirstObjectAncestor();
+
+      // Geometry Object may be the first object.
+      if ( firstObject == null ) {
+        // Process the Geometry Base object as the root object.
+        geometrynode.Base = BuildBaseObjectTree( geometrynode.ModelItem, geometrynode );
+      } else {
+        geometrynode.Base = BuildBaseObjectTree( firstObject, geometrynode );
+      }
+
+      // Populate the ancestor properties.
+    }
+
+    public Base BuildBaseObjectTree ( ModelItem element, NavisGeometry geometry ) {
+      Base elementBase = new Base();
+
+      Base propertiesBase = new Base();
+
+      PropertyCategoryCollection propertyCategories = element.PropertyCategories;
+
+      foreach ( PropertyCategory propertyCategory in propertyCategories ) {
+
+        DataPropertyCollection properties = propertyCategory.Properties;
+        Base propertyCategoryBase = new Base();
+        string categoryName = SanitizePropertyName( propertyCategory.DisplayName );
+
+        foreach ( DataProperty property in properties ) {
+          string key;
+          try {
+            key = SanitizePropertyName( property.DisplayName.ToString() );
+          } catch ( Exception err ) {
+            Logging.ErrorLog( $"Property Name not converted. {err.Message}" );
+            break;
+          }
+
+          dynamic propValue = null;
+
+          VariantDataType type = property.Value.DataType;
+
+          switch ( type ) {
+            case VariantDataType.Boolean: propValue = property.Value.ToBoolean().ToString(); break;
+            case VariantDataType.DisplayString: propValue = property.Value.ToDisplayString(); break;
+            case VariantDataType.IdentifierString: propValue = property.Value.ToIdentifierString(); break;
+            case VariantDataType.Int32: propValue = property.Value.ToInt32().ToString(); break;
+            case VariantDataType.Double: propValue = property.Value.ToDouble().ToString(); break;
+            case VariantDataType.DoubleAngle: propValue = property.Value.ToDoubleAngle().ToString(); break;
+            case VariantDataType.DoubleArea: propValue = property.Value.ToDoubleArea().ToString(); break;
+            case VariantDataType.DoubleLength: propValue = property.Value.ToDoubleLength().ToString(); break;
+            case VariantDataType.DoubleVolume: propValue = property.Value.ToDoubleVolume().ToString(); break;
+            case VariantDataType.DateTime: propValue = property.Value.ToDateTime().ToString(); break;
+            case VariantDataType.NamedConstant: propValue = property.Value.ToNamedConstant().ToString(); break;
+            case VariantDataType.Point3D: propValue = property.Value.ToPoint3D().ToString(); break;
+            case VariantDataType.None: break;
+            case VariantDataType.Point2D:
+              break;
+            default:
+              break;
+          }
+
+
+          if ( propValue != null ) {
+
+            object keyPropValue = propertyCategoryBase[ key ];
+
+            if ( keyPropValue == null ) {
+              propertyCategoryBase[ key ] = propValue;
+            } else if ( keyPropValue.GetType().IsArray ) {
+              List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
+              arrayPropValue.Add( propValue );
+              propertyCategoryBase[ key ] = arrayPropValue;
+            } else {
+              dynamic existingValue = keyPropValue;
+              List<dynamic> arrayPropValue = new List<dynamic> {
+                  existingValue,
+                  propValue
+                };
+              propertyCategoryBase[ key ] = arrayPropValue;
+            }
+
+          }
+
+        }
+
+        if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && categoryName != null ) {
+          if ( propertiesBase != null ) {
+
+            if ( categoryName == "Geometry" ) {
+              continue;
+            }
+
+            if ( categoryName == "Item" ) {
+              //propertiesBase[ "Item_" ] = propertyCategoryBase;
+
+              foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
+                elementBase[ property ] = propertyCategoryBase[ property ];
+              }
+
+
+            } else {
+              propertiesBase[ categoryName ] = propertyCategoryBase;
+            }
+          }
+        }
+
+
+      }
+      elementBase[ "Properties" ] = propertiesBase;
+
+      if ( element == geometry.ModelItem ) {
+        // Establish the node as the geometry node and copy through the existing conversion.
+        foreach ( string baseProperty in geometry.Geometry.GetDynamicMembers() ) {
+          elementBase[ baseProperty ] = geometry.Geometry[ baseProperty ];
+        }
+      } else {
+        // Process the descendants.
+        List<Base> children = new List<Base>();
+        if ( element.Children.Count() > 0 ) {
+          for ( int d = 0; d < element.Children.Count(); d++ ) {
+            ModelItem child = element.Children.ElementAt( d );
+            var bbot = BuildBaseObjectTree( child, geometry );
+            children.Add( bbot );
+          }
+          elementBase[ "@Elements" ] = children;
+        }
+      }
+
+      if ( element.IsCollection ) {
+        elementBase[ "NodeType" ] = "Collection";
+      }
+
+      if ( element.IsComposite ) {
+        elementBase[ "NodeType" ] = "Composite Object";
+      }
+
+      if ( element.IsInsert ) {
+        elementBase[ "NodeType" ] = "Geometry Insert";
+      }
+
+      if ( element.IsLayer ) {
+        elementBase[ "NodeType" ] = "Layer";
+      }
+
+      if ( element.Model != null ) {
+        elementBase[ "Source" ] = element.Model.SourceFileName;
+      }
+
+      if ( element.Model != null ) {
+        elementBase[ "Filename" ] = element.Model.FileName;
+      }
+
+      if ( element.Model != null ) {
+        elementBase[ "Source Guid" ] = element.Model.SourceGuid;
+      }
+
+      if ( element.Model != null ) {
+        elementBase[ "Creator" ] = element.Model.Creator;
+      }
+
+      if ( element.InstanceGuid != null ) {
+        elementBase[ "InstanceGuid" ] = element.InstanceGuid;
+      }
+
+      if ( element.ClassDisplayName != null ) {
+        elementBase[ "ClassDisplayName" ] = element.ClassDisplayName;
+      }
+
+      if ( element.ClassName != null ) {
+        elementBase[ "ClassName" ] = element.ClassName;
+      }
+
+      if ( element.DisplayName != null ) {
+        elementBase[ "DisplayName" ] = element.DisplayName;
+      }
+
+      return elementBase;
+    }
+
+    /// <summary>
+    /// Parse all descendant nodes of the element that are visible, selected and geometry nodes.
+    /// </summary>
+    public List<ModelItem> CollectGeometryNodes ( ModelItem element ) {
+      ModelItemEnumerableCollection descendants = element.DescendantsAndSelf;
+
+      // if the descendant node isn't hidden, has geometry and is part of the original selection set.
+
+      List<ModelItem> items = new List<ModelItem>();
+
+      foreach ( ModelItem item in descendants ) {
+        bool hasGeometry = item.HasGeometry;
+        bool isVisible = !item.IsHidden;
+        bool isSelected = selectedItemsAndDescendants.IsSelected( item );
+
+        if ( hasGeometry && isVisible && isSelected ) {
+          items.Add( item );
+        }
+      }
+
+      return items;
+    }
+
+    public void AddFragments ( NavisGeometry geometry ) {
+
+      geometry.ModelFragments = new Stack<ComApi.InwOaFragment3>();
+
+      foreach ( ComApi.InwOaPath path in geometry.ComSelection.Paths() ) {
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+
+          int[] a1 = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          int[] a2 = ( ( Array )path.ArrayData ).ToArray<int>();
+          bool isSame = true;
+
+          if ( a1.Length != a2.Length || !Enumerable.SequenceEqual( a1, a2 ) ) {
+            isSame = false;
+          }
+
+          if ( isSame ) {
+            geometry.ModelFragments.Push( frag );
+          }
+        }
+      }
+    }
+
+    public void GetSortedFragments ( ModelItemCollection modelItems ) {
+      ComApi.InwOpSelection oSel = ComBridge.ToInwOpSelection( modelItems );
+      // To be most efficient you need to lookup an efficient EqualityComparer
+      // for the int[] key
+      foreach ( ComApi.InwOaPath3 path in oSel.Paths() ) {
+        // this yields ONLY unique fragments
+        // ordered by geometry they belong to
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+          int[] pathArr = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          if ( !this.pathDictionary.TryGetValue( pathArr, out Stack<ComApi.InwOaFragment3> frags ) ) {
+            frags = new Stack<ComApi.InwOaFragment3>();
+            this.pathDictionary[ pathArr ] = frags;
+          }
+          frags.Push( frag );
+        }
+      }
+    }
+
+    public void TranslateGeometryElement ( NavisGeometry geometryElement ) {
+      Base elementBase = new Base();
+
+      if ( geometryElement.ModelItem.HasGeometry && geometryElement.ModelItem.Children.Count() == 0 ) {
+        List<Base> speckleGeometries = TranslateFragmentGeometry( geometryElement );
+        if ( speckleGeometries.Count > 0 ) {
+          elementBase[ "displayValue" ] = speckleGeometries;
+          elementBase[ "units" ] = "m";
+          elementBase[ "bbox" ] = BoxToSpeckle( geometryElement.ModelItem.BoundingBox() );
+        }
+      }
+      geometryElement.Geometry = elementBase;
+    }
+
+
+    private Box BoxToSpeckle ( BoundingBox3D boundingBox3D ) {
+      Box boundingBox = new Box();
+
+      double scale = 0.001; // TODO: Proper units support.
+
+      Point3D min = boundingBox3D.Min;
+      Point3D max = boundingBox3D.Max;
+
+      boundingBox.xSize = new Objects.Primitive.Interval( min.X * scale, max.X * scale );
+      boundingBox.ySize = new Objects.Primitive.Interval( min.Y * scale, max.Y * scale );
+      boundingBox.zSize = new Objects.Primitive.Interval( min.Z * scale, max.Z * scale );
+
+      return boundingBox;
+    }
+
+    public List<Base> TranslateFragmentGeometry ( NavisGeometry navisGeometry ) {
+      List<Shared.CallbackGeomListener> callbackListeners = navisGeometry.GetUniqueFragments();
+
+      List<Base> baseGeometries = new List<Base>();
+
+      foreach ( Shared.CallbackGeomListener callback in callbackListeners ) {
+        List<NavisDoubleTriangle> Triangles = callback.Triangles;
+        // TODO: Additional Geometry Types
+        //List<NavisDoubleLine> Lines = callback.Lines;
+        //List<NavisDoublePoint> Points = callback.Points;
+
+        List<double> vertices = new List<double>();
+        List<int> faces = new List<int>();
+
+        Vector3D move = this.TransformVector3D;
+
+        int triangleCount = Triangles.Count;
+        if ( triangleCount > 0 ) {
+
+          for ( int t = 0; t < triangleCount; t += 1 ) {
+            double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
+
+            // Apply the bounding box move.
+            // The native API methods for overriding transforms are not thread safe to call from the CEF instance
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex1.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex1.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex1.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex2.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex2.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex2.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex3.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex3.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex3.Z + move.Z ) * scale
+            } );
+
+            // TODO: Move this back to Geometry.cs
+            faces.Add( 0 );
+            faces.Add( t * 3 );
+            faces.Add( t * 3 + 1 );
+            faces.Add( t * 3 + 2 );
+          }
+          Objects.Geometry.Mesh baseMesh = new Objects.Geometry.Mesh( vertices, faces );
+          baseMesh[ "renderMaterial" ] = TranslateMaterial( navisGeometry.ModelItem );
+          baseGeometries.Add( baseMesh );
+        }
+      }
+      return baseGeometries; // TODO: Check if this actually has geometries before adding to DisplayValue
+    }
 
     public Base TranslateElement ( ModelItem element ) {
       Base elementBase = new Base();
