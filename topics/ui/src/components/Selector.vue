@@ -3,11 +3,12 @@
 
   import { mapGetters, mapState } from 'vuex';
   import { sortByKey } from '@/utilities/utils';
+  import { isoDate } from '@/filters';
 
   export default Vue.extend({
     name: 'WorkshopSelector',
     computed: {
-      ...mapGetters(['liveProjects', 'selectedWorkshops']),
+      ...mapGetters(['liveProjects']),
       ...mapState({
         isDevMode: (state) => state.isDevMode,
         isEmbedded: (state) => state.isEmbedded,
@@ -27,31 +28,66 @@
           (workshop) => workshop.id === this.selectedIssue.id
         )[0];
       },
+      projectWorkshops() {
+        const workshops = this.workshops;
+
+        console.log(this.workshops);
+
+        return workshops.filter(
+          (workshop) => workshop?.project?.key === this.activeProject.key
+        );
+      },
       workshopList() {
-        if (this.selectedProject) {
-          return sortByKey(
-            this.selectedWorkshops(this.selectedProject),
-            'number',
-            'desc'
-          );
+        if (this.selectedProject && this.projectWorkshops) {
+          return sortByKey(this.projectWorkshops, 'number', 'desc');
         }
         return [];
       },
       selectedWorkshop: {
         get() {
-          return this.$store.state.activeWorkshop;
+          let workshopId = this.$store.state.activeWorkshop;
+          return workshopId;
         },
-        set(workshop) {
-          this.$store.commit('SET_SELECTED_WORKSHOP', workshop);
+        set(workshopId) {
+          this.$store.commit('SET_SELECTED_WORKSHOP', workshopId);
         },
       },
       selectedProject: {
         get() {
           return this.$store.state.activeProject;
         },
-        set(project) {
-          this.$store.commit('SET_SELECTED_PROJECT', project);
+        set(projectId) {
+          this.$store.commit('SET_SELECTED_PROJECT', projectId);
         },
+      },
+      activeProject() {
+        return this.liveProjects.find(
+          (project) => project.id === this.selectedProject
+        );
+      },
+    },
+    mounted: function () {},
+    methods: {
+      workshopChange(value) {
+        if (!value || !this.selectedProject) return;
+        if (value === this.selectedProject) {
+          if (this.projectWorkshops.length === 1) {
+            this.selectedWorkshop = this.projectWorkshops[0].id;
+          }
+          if (this.projectWorkshops.length > 1) {
+            this.selectedWorkshop = sortByKey(
+              this.projectWorkshops,
+              'number',
+              'desc'
+            )[0].id;
+          }
+          console.log('changed project');
+        } else {
+          console.log('changed workshop');
+        }
+      },
+      isoDate(date) {
+        return isoDate(date);
       },
     },
   });
@@ -73,7 +109,11 @@
             :items="projectList"
             item-text="name"
             item-value="id"
-          /> </v-col
+            @change="workshopChange"
+            ><template #item="{ item }"
+              ><span>{{ item.key }} - {{ item.name }}</span></template
+            >
+          </v-select></v-col
         ><v-col>
           <v-select
             v-model="selectedWorkshop"
@@ -81,8 +121,14 @@
             dense
             label="Workshop"
             :items="workshopList"
-            item-text="number"
+            :item-text="
+              (item) =>
+                `${item.number} [${isoDate(item.meetingDate)}] - ${
+                  item.summary
+                }`
+            "
             item-value="id"
+            @change="workshopChange"
           >
             <template #item="{ item }">
               <span>

@@ -88,7 +88,10 @@
         issues: (state) => state.issues,
         activeIssue: (state) => state.activeIssue,
         currentWorkshop: (state) => state.currentWorkshop,
+        currentProject: (state) => state.currentProject,
+        isEmbedded: (state) => state.isEmbedded,
       }),
+
       selectedIssue: {
         get() {
           if (
@@ -175,7 +178,14 @@
         let age = now;
 
         if (this.currentWorkshop && this.currentWorkshop.lastViewed) {
-          age = this.currentWorkshop.lastViewed.toDate().getTime();
+          if (this.currentWorkshop.lastViewed.toDate) {
+            age = this.currentWorkshop.lastViewed.toDate().getTime();
+          } else {
+            const milliseconds =
+              this.currentWorkshop.lastViewed?.seconds * 1000 +
+              this.currentWorkshop.lastViewed?.nanoseconds / 1000000;
+            age = new Date(milliseconds).getTime();
+          }
         }
 
         return now - age;
@@ -233,9 +243,7 @@
         });
       },
       isEmbedded() {
-        return (
-          Boolean(window.UIBindings) || Boolean(this.$route.query.pane === true)
-        );
+        return this.embedded;
       },
       keymap() {
         return {
@@ -275,7 +283,7 @@
         }
       },
       workshopId(ref) {
-        console.log(ref);
+        // console.log(ref);
         if (ref) this.bindWorkshop();
       },
       issueIdList(issues, oldIssues) {
@@ -322,6 +330,7 @@
           (el) => el.id === this.selectedIssue
         );
 
+        if (index < 0) return;
         const views = this.viewsPerIssue[index].views;
         if (views) {
           this.mapViewpoints(
@@ -370,7 +379,7 @@
         if (issueId === this.selectedIssue) {
           this.selectedIssue = undefined;
         } else {
-          console.log('selectIssue', issue);
+          // console.log('selectIssue', issue);
 
           this.selectedIssue = issueId;
 
@@ -421,7 +430,7 @@
           query
         );
 
-        console.log({ viewByQuery });
+        // console.log({ viewByQuery });
 
         this.loadingImages = false;
         this.showDeletedViews = !this.showDeletedViews;
@@ -691,6 +700,10 @@
       <v-col align="end">
         <v-btn v-if="embedded" @click="toggleDeleted"
           >{{ showDeletedViews ? 'Exclude' : 'Include' }} Deleted Images</v-btn
+        > </v-col
+      ><v-col align="end">
+        <v-btn v-if="embedded" @click="toggleDeleted"
+          >{{ showDeletedViews ? 'Exclude' : 'Include' }} Deleted Images</v-btn
         >
       </v-col>
     </v-row>
@@ -785,11 +798,11 @@
     padding: 0 2em;
   }
 
-  #boundingbox path,
-  #footprint path,
-  #grid path {
-    vector-effect: non-scaling-stroke;
-  }
+  // #boundingbox path,
+  // #footprint path,
+  // #grid path {
+  //   vector-effect: non-scaling-stroke;
+  // }
 
   #boundingbox {
     path {

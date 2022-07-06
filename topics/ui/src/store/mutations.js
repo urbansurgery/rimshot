@@ -12,8 +12,8 @@ export default {
   SET_SELECTED_WORKSHOP: (state, workshop) => {
     state.activeWorkshop = workshop;
   },
-  SET_SELECTED_ISSUE: (state, issue) => {
-    state.activeIssue = issue;
+  SET_SELECTED_ISSUE: (state, issueId) => {
+    state.activeIssue = issueId;
   },
   SET_EMBEDDED: (state, flag) => {
     state.isEmbedded = Boolean(flag);
