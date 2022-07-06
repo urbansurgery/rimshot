@@ -4,7 +4,7 @@ Because each topic's functionality is dependant on the others, these are not 'pa
 
 Current topics under development:
 
-* Navisworks Adding
+* Navisworks Addin
 * Web UI
 * Background enabling functions
 * Firebase DB
