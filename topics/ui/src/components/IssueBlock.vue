@@ -209,15 +209,15 @@
         };
 
         if (speckle_host && speckle_stream && speckle_commit_object) {
-          return `${urlParts.host}/embed?stream=${urlParts.stream}&object=${urlParts.commitObject}`;
+          return `${urlParts.host}/embed?transparent=true&stream=${urlParts.stream}&object=${urlParts.commitObject}`;
         }
 
         if (speckle_host && speckle_stream && speckle_object) {
-          return `${urlParts.host}/embed?stream=${urlParts.stream}&object=${urlParts.object}`;
+          return `${urlParts.host}/embed?transparent=true&stream=${urlParts.stream}&object=${urlParts.object}`;
         }
 
         if (speckle_host && speckle_stream && speckle_commit) {
-          return `${urlParts.host}/embed?stream=${urlParts.stream}&commit=${urlParts.commit}`;
+          return `${urlParts.host}/embed?transparent=true&stream=${urlParts.stream}&commit=${urlParts.commit}`;
         }
 
         return null;
