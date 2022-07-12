@@ -1,8 +1,7 @@
-﻿using Rimshot.Shared.Workshop;
+﻿
+using Rimshot.Shared.Plugin;
 using Speckle.Core.Logging;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rimshot.Shared {
   public static class Logging {

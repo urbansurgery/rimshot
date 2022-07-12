@@ -9,8 +9,8 @@ using System.Windows.Controls;
 using Navis = Autodesk.Navisworks.Api.Application;
 using Path = System.IO.Path;
 
-namespace Rimshot.Shared.Workshop {
-  public class Image {
+namespace Rimshot.Shared.Plugin {
+  public class Snapshot {
     [JsonProperty]
     internal string name;
     [JsonProperty]
@@ -22,7 +22,7 @@ namespace Rimshot.Shared.Workshop {
     [JsonProperty]
     internal ImageViewpoint viewpoint;
 
-    public Image ( SavedViewpoint view ) {
+    public Snapshot ( SavedViewpoint view ) {
       this.name = view.DisplayName;
       this.guid = view.Guid;
 
@@ -182,12 +182,12 @@ namespace Rimshot.Shared.Workshop {
       return factor;
     }
   }
-  public partial class IssueListPane : UserControl {
+  public partial class RimshotPane : UserControl {
     public class Bindings : UIBindings { }
 
     public Bindings bindings;
 
-    public IssueListPane ( string address = Bindings.Url ) {
+    public RimshotPane ( string address = Bindings.Url ) {
 
       InitializeCef();
       InitializeComponent();

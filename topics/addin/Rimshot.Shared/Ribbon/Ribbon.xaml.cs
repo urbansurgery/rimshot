@@ -86,7 +86,7 @@ namespace Rimshot.Shared {
         return false;
       }
 
-      Plugin loadedPlugin = pluginRecord.LoadedPlugin ?? pluginRecord.LoadPlugin();
+      Autodesk.Navisworks.Api.Plugins.Plugin loadedPlugin = pluginRecord.LoadedPlugin ?? pluginRecord.LoadPlugin();
 
       // Activate the Plugin's pane if it is of the right type
       if ( pluginRecord.IsLoaded && pluginRecord is DockPanePluginRecord && pluginRecord.IsEnabled ) {

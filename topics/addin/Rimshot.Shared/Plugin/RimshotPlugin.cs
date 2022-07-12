@@ -1,8 +1,9 @@
 ﻿using Autodesk.Navisworks.Api.Plugins;
+using Rimshot.Shared.Plugin;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 
-namespace Rimshot.Shared.Workshop.IssueList {
+namespace Rimshot.Shared.IssueList {
 
   #region WebViewPlugin
 
@@ -22,7 +23,7 @@ namespace Rimshot.Shared.Workshop.IssueList {
 
       ElementHost eh = new ElementHost {
         AutoSize = true,
-        Child = new IssueListPane( /*address: "https://rimshot.app/issues"*/ )
+        Child = new RimshotPane( /*address: "https://rimshot.app/issues"*/ )
       };
 
       eh.CreateControl();

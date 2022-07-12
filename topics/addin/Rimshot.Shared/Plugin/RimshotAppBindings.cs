@@ -1,6 +1,8 @@
 ﻿using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.DocumentParts;
 using CefSharp;
+using Objects.Geometry;
+using Rimshot.Shared.ArrayExtensions;
 using Speckle.Core.Api;
 using Speckle.Core.Credentials;
 using Speckle.Core.Logging;
@@ -22,10 +24,7 @@ using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
-using Rimshot.Shared.ArrayExtensions;
-using Objects.Geometry;
-
-namespace Rimshot.Shared.Workshop {
+namespace Rimshot.Shared.Plugin {
 
   public abstract class UIBindings {
 #if DEBUG
@@ -40,7 +39,7 @@ namespace Rimshot.Shared.Workshop {
 
     public IWebBrowser Browser { get; set; }
 
-    public IssueListPane Window { get; set; }
+    public RimshotPane Window { get; set; }
     private string image;
 
     // base64 encoding of the image
@@ -77,6 +76,8 @@ namespace Rimshot.Shared.Workshop {
       this.Browser.Reload( force );
       this.Browser.GetMainFrame().LoadUrl( Url );
     }
+
+
 
     public virtual void AddImage () => this.SendIssueView();
 
@@ -853,21 +854,21 @@ namespace Rimshot.Shared.Workshop {
         DisplayName = string.Format( "View - {0}", id )
       };
       Navis.ActiveDocument.SavedViewpoints.AddCopy( oNewViewPt1 );
-      Image image = new Image( oNewViewPt1 ) { name = "View" };
+      Snapshot issueSnapshot = new Snapshot( oNewViewPt1 ) { name = "View" };
 
       ComApi.InwOpState10 oState = ComBridge.State;
       ComApi.InwOaPropertyVec options = oState.GetIOPluginOptions( "lcodpimage" );
 
       _tempFolder = Path.Combine( Path.GetTempPath(), "Rimshot.ExportBCF", Path.GetRandomFileName() );
 
-      string imageFolder = Path.Combine( this._tempFolder, image.guid.ToString() );
-      string snapshot = Path.Combine( imageFolder, image.name + ".png" );
+      string snapshotFolder = Path.Combine( this._tempFolder, issueSnapshot.guid.ToString() );
+      string snapshotFile = Path.Combine( snapshotFolder, issueSnapshot.name + ".png" );
 
       if ( !Directory.Exists( this._tempFolder ) ) {
         Directory.CreateDirectory( this._tempFolder );
       }
 
-      _ = Directory.CreateDirectory( imageFolder );
+      _ = Directory.CreateDirectory( snapshotFolder );
 
       foreach ( ComApi.InwOaProperty opt in options.Properties() ) {
         if ( opt.name == "export.image.format" ) {
@@ -882,24 +883,24 @@ namespace Rimshot.Shared.Workshop {
           opt.value = 900;
         }
       }
-      oState.DriveIOPlugin( "lcodpimage", snapshot, options );
+      oState.DriveIOPlugin( "lcodpimage", snapshotFile, options );
 
       try {
         stream = new MemoryStream();
 
-        Bitmap oBitmap = new Bitmap( snapshot );
-        Bitmap tBitmap = new Bitmap( snapshot );
+        Bitmap oBitmap = new Bitmap( snapshotFile );
+        Bitmap tBitmap = new Bitmap( snapshotFile );
 
         oBitmap.Save( stream, System.Drawing.Imaging.ImageFormat.Jpeg );
         imageBytes = stream.ToArray();
-        image.image = Convert.ToBase64String( imageBytes );
+        issueSnapshot.image = Convert.ToBase64String( imageBytes );
 
         ImageViewpoint viewpoint = new ImageViewpoint( oNewViewPt1 );
 
       } catch ( Exception err ) {
         _ = MessageBox.Show( err.Message );
       }
-      string imageString = JsonConvert.SerializeObject( image );
+      string imageString = JsonConvert.SerializeObject( issueSnapshot );
 
       SetImage( imageString );
       NotifyUI( "new-image", imageString );
