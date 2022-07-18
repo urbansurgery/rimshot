@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\ArrayExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Geometry\Geometry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\Logging.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Properties\Properties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.xaml.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Tools\Tools.cs" />
