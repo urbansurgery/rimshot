@@ -7,31 +7,28 @@ namespace Rimshot.Shared.IssueList {
 
   #region WebViewPlugin
 
-  [Plugin( Tools.IssueList.Plugin, "Rimshot", DisplayName = "Register", ToolTip = "Workshop Issue List Management" )]
+  [Plugin( Tools.IssueList.Plugin, "Rimshot", DisplayName = "Rimshot", ToolTip = "Issue Register" )]
   [DockPanePlugin( 400, 400, FixedSize = false )]
 
   class WebViewPlugin : DockPanePlugin {
 
     public override Control CreateControlPane () {
 
-#if DEBUG
-      System.Console.WriteLine( "Mode=Debug" );
-
-#else
-      System.Console.WriteLine( "Mode=Release" );     
-#endif
-
-      ElementHost eh = new ElementHost {
+      // Called to tell the plugin to create it's pane.
+      // Should be overriden in conjunction with DestroyControlPane.
+      ElementHost elementHost = new ElementHost {
         AutoSize = true,
         Child = new RimshotPane( /*address: "https://rimshot.app/issues"*/ )
       };
 
-      eh.CreateControl();
+      elementHost.CreateControl();
 
-      return eh;
+      return elementHost;
 
     }
 
+    // Called to tell the plugin to destroy it's pane.
+    // Should be overriden in conjunction with CreateControlPane.
     public override void DestroyControlPane ( Control pane ) => pane.Dispose();
 
   }

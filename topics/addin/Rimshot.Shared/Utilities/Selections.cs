@@ -14,7 +14,9 @@ namespace Rimshot.Shared {
       DocumentModels models = activeDocument.Models;
       ModelItemCollection selectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
 
-      if ( selectedItems.Count == 0 ) return;
+      if ( selectedItems.Count == 0 ) {
+        return;
+      }
 
       if ( showOnlySelected ) {
         // hide all root models

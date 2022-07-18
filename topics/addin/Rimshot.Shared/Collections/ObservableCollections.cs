@@ -34,11 +34,7 @@ namespace Rimshot {
     /// Changed Property Handler
     /// </summary>
     /// <param name="info"></param>
-    public void NotifyPropertyChanged ( String info ) {
-      if ( PropertyChanged != null ) {
-        PropertyChanged( this, new PropertyChangedEventArgs( info ) );
-      }
-    }
+    public void NotifyPropertyChanged ( String info ) => PropertyChanged?.Invoke( this, new PropertyChangedEventArgs( info ) );
   }
 
   /// <summary>
@@ -46,7 +42,7 @@ namespace Rimshot {
   /// of future developement and uniformation to other Jira/BCF plugins
   /// </summary>
   public class IssueBCF {
-    public SavedViewpoint viewpoint {
+    public SavedViewpoint savedViewpoint {
       get; set;
     }
 
@@ -60,11 +56,7 @@ namespace Rimshot {
     /// Changed Property Handler
     /// </summary>
     /// <param name="info"></param>
-    public void NotifyPropertyChanged ( String info ) {
-      if ( PropertyChanged != null ) {
-        PropertyChanged( this, new PropertyChangedEventArgs( info ) );
-      }
-    }
+    public void NotifyPropertyChanged ( String info ) => PropertyChanged?.Invoke( this, new PropertyChangedEventArgs( info ) );
   }
 
 }

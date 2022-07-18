@@ -19,9 +19,11 @@ namespace Rimshot.Converters {
     /// <param name="culture"></param>
     /// <returns></returns>
     public object Convert ( object value, Type targetType, object parameter, CultureInfo culture ) {
-      if ( ( int )value != 0 )
+      if ( ( int )value != 0 ) {
         return true;
-      else return false;
+      } else {
+        return false;
+      }
     }
 
     /// <summary>
@@ -32,10 +34,7 @@ namespace Rimshot.Converters {
     /// <param name="parameter"></param>
     /// <param name="culture"></param>
     /// <returns></returns>
-    public object ConvertBack ( object value, Type targetType, object parameter, CultureInfo culture ) {
-
-      throw new NotImplementedException();
-    }
+    public object ConvertBack ( object value, Type targetType, object parameter, CultureInfo culture ) => throw new NotImplementedException();
 
   }
 
