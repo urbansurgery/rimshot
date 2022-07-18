@@ -1,5 +1,6 @@
 ﻿using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.DocumentParts;
+using Autodesk.Navisworks.Api.Interop;
 using CefSharp;
 using Objects.Geometry;
 using Rimshot.Shared.ArrayExtensions;
@@ -41,6 +42,9 @@ namespace Rimshot.Shared.Plugin {
 
     public RimshotPane Window { get; set; }
     private string image;
+
+    private readonly List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions = new List<Tuple<NamedConstant, NamedConstant>>();
+    private Base QuickProperties;
 
     // base64 encoding of the image
     public virtual string GetImage () => this.image;
@@ -98,7 +102,7 @@ namespace Rimshot.Shared.Plugin {
     public Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>> modelGeometryDictionary = new Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>>();
     public HashSet<NavisGeometry> GeometrySet = new HashSet<NavisGeometry>();
 
-    private ModelItemCollection selectedItems = new ModelItemCollection();
+    private readonly ModelItemCollection selectedItems = new ModelItemCollection();
     private readonly ModelItemCollection selectedItemsAndDescendants = new ModelItemCollection();
 
     /// <summary>
@@ -110,7 +114,7 @@ namespace Rimshot.Shared.Plugin {
 
       Logging.ConsoleLog( "Commit Selection commenced." );
 
-      dynamic commitPayload = ( dynamic )payload;
+      dynamic commitPayload = payload;
 
       string branchName = commitPayload.branch;
       string streamId = commitPayload.stream;
@@ -206,6 +210,8 @@ namespace Rimshot.Shared.Plugin {
         z = 0
       };
 
+      // Gather the Quick Properties for multi branch persistance
+      this.QuickPropertyDefinitions.AddRange( LoadQuickProperties().Distinct().ToList() );
 
       // This will be the Elements for the commit.
       List<Base> translatedElements = new List<Base>();
@@ -261,6 +267,8 @@ namespace Rimshot.Shared.Plugin {
         // Do the geometry conversion work.
         TranslateGeometryElement( navisGeometry );
 
+        QuickProperties = new Base();
+
         // Do the properties and hierarchy conversion work.
         TranslateHierarchyElement( navisGeometry );
 
@@ -289,7 +297,7 @@ namespace Rimshot.Shared.Plugin {
       Base myCommit = new Base();
 
       List<Base> Elements = new List<Base>();
-      foreach ( var e in geometryDict.Keys ) {
+      foreach ( NavisGeometry e in geometryDict.Keys ) {
         Elements.Add( e.Base );
       }
 
@@ -335,99 +343,134 @@ namespace Rimshot.Shared.Plugin {
       // Populate the ancestor properties.
     }
 
+    public void BuildPropertyCategory ( PropertyCategory propertyCategory, DataProperty property, ref Base propertyCategoryBase ) {
+      string categoryName;
+      string propertyName;
+      try {
+        categoryName = SanitizePropertyName( propertyCategory.DisplayName );
+      } catch ( Exception err ) {
+        Logging.ErrorLog( $"Category Name not converted. {err.Message}" );
+        return;
+      }
+
+      try {
+        propertyName = SanitizePropertyName( property.DisplayName );
+      } catch ( Exception err ) {
+        Logging.ErrorLog( $"Category Name not converted. {err.Message}" );
+        return;
+      }
+
+      dynamic propertyValue = null;
+
+      VariantDataType type = property.Value.DataType;
+
+      switch ( type ) {
+        case VariantDataType.Boolean: propertyValue = property.Value.ToBoolean(); break;
+        case VariantDataType.DisplayString: propertyValue = property.Value.ToDisplayString(); break;
+        case VariantDataType.IdentifierString: propertyValue = property.Value.ToIdentifierString(); break;
+        case VariantDataType.Int32: propertyValue = property.Value.ToInt32(); break;
+        case VariantDataType.Double: propertyValue = property.Value.ToDouble(); break;
+        case VariantDataType.DoubleAngle: propertyValue = property.Value.ToDoubleAngle(); break;
+        case VariantDataType.DoubleArea: propertyValue = property.Value.ToDoubleArea(); break;
+        case VariantDataType.DoubleLength: propertyValue = property.Value.ToDoubleLength(); break;
+        case VariantDataType.DoubleVolume: propertyValue = property.Value.ToDoubleVolume(); break;
+        case VariantDataType.DateTime: propertyValue = property.Value.ToDateTime().ToString(); break;
+        case VariantDataType.NamedConstant: propertyValue = property.Value.ToNamedConstant().DisplayName; break;
+        case VariantDataType.Point3D: propertyValue = property.Value.ToPoint3D(); break;
+        case VariantDataType.None: break;
+        case VariantDataType.Point2D:
+          break;
+        default:
+          break;
+      }
+
+      if ( propertyValue != null ) {
+        object keyPropValue = propertyCategoryBase[ propertyName ];
+
+        if ( keyPropValue == null ) {
+          propertyCategoryBase[ propertyName ] = propertyValue;
+          //} else if ( keyPropValue.GetType().IsArray ) {
+        } else if ( keyPropValue is List<dynamic> ) {
+          List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
+
+          if ( !arrayPropValue.Contains( propertyValue ) ) {
+
+            arrayPropValue.Add( propertyValue );
+          }
+
+          propertyCategoryBase[ propertyName ] = arrayPropValue;
+        } else {
+          dynamic existingValue = keyPropValue;
+
+          if ( existingValue != propertyValue ) {
+            List<dynamic> arrayPropValue = new List<dynamic> {
+                  existingValue,
+                  propertyValue
+                };
+
+            propertyCategoryBase[ propertyName ] = arrayPropValue;
+          }
+        }
+      }
+
+    }
+
     public Base BuildBaseObjectTree ( ModelItem element, NavisGeometry geometry ) {
       Base elementBase = new Base();
 
       Base propertiesBase = new Base();
 
-      PropertyCategoryCollection propertyCategories = element.PropertyCategories;
+      // GUI visible properties varies by a Global Options setting.
+      PropertyCategoryCollection propertyCategories = element.GetUserFilteredPropertyCategories();
+
+      // If Add QuickProperties is set.
+      foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in QuickPropertyDefinitions ) {
+        PropertyCategory foundCategory = propertyCategories.FindCategoryByCombinedName( quickPropertyDef.Item1 );
+
+        if ( foundCategory != null ) {
+          DataProperty foundProperty = propertyCategories.FindPropertyByCombinedName( quickPropertyDef.Item1, quickPropertyDef.Item2 );
+
+          Base quickPropertiesCategoryBase;
+
+          string foundCategoryName = SanitizePropertyName( foundCategory.DisplayName );
+
+          quickPropertiesCategoryBase = QuickProperties[ foundCategoryName ] == null ? new Base() : ( Base )QuickProperties[ foundCategoryName ];
+
+          if ( foundProperty != null ) {
+            BuildPropertyCategory( foundCategory, foundProperty, ref quickPropertiesCategoryBase );
+          }
+
+          QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
+        }
+      }
 
       foreach ( PropertyCategory propertyCategory in propertyCategories ) {
-
         DataPropertyCollection properties = propertyCategory.Properties;
         Base propertyCategoryBase = new Base();
-        string categoryName = SanitizePropertyName( propertyCategory.DisplayName );
 
-        foreach ( DataProperty property in properties ) {
-          string key;
-          try {
-            key = SanitizePropertyName( property.DisplayName.ToString() );
-          } catch ( Exception err ) {
-            Logging.ErrorLog( $"Property Name not converted. {err.Message}" );
-            break;
-          }
+        properties.ToList().ForEach( property => BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
 
-          dynamic propValue = null;
-
-          VariantDataType type = property.Value.DataType;
-
-          switch ( type ) {
-            case VariantDataType.Boolean: propValue = property.Value.ToBoolean().ToString(); break;
-            case VariantDataType.DisplayString: propValue = property.Value.ToDisplayString(); break;
-            case VariantDataType.IdentifierString: propValue = property.Value.ToIdentifierString(); break;
-            case VariantDataType.Int32: propValue = property.Value.ToInt32().ToString(); break;
-            case VariantDataType.Double: propValue = property.Value.ToDouble().ToString(); break;
-            case VariantDataType.DoubleAngle: propValue = property.Value.ToDoubleAngle().ToString(); break;
-            case VariantDataType.DoubleArea: propValue = property.Value.ToDoubleArea().ToString(); break;
-            case VariantDataType.DoubleLength: propValue = property.Value.ToDoubleLength().ToString(); break;
-            case VariantDataType.DoubleVolume: propValue = property.Value.ToDoubleVolume().ToString(); break;
-            case VariantDataType.DateTime: propValue = property.Value.ToDateTime().ToString(); break;
-            case VariantDataType.NamedConstant: propValue = property.Value.ToNamedConstant().ToString(); break;
-            case VariantDataType.Point3D: propValue = property.Value.ToPoint3D().ToString(); break;
-            case VariantDataType.None: break;
-            case VariantDataType.Point2D:
-              break;
-            default:
-              break;
-          }
-
-
-          if ( propValue != null ) {
-
-            object keyPropValue = propertyCategoryBase[ key ];
-
-            if ( keyPropValue == null ) {
-              propertyCategoryBase[ key ] = propValue;
-            } else if ( keyPropValue.GetType().IsArray ) {
-              List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
-              arrayPropValue.Add( propValue );
-              propertyCategoryBase[ key ] = arrayPropValue;
-            } else {
-              dynamic existingValue = keyPropValue;
-              List<dynamic> arrayPropValue = new List<dynamic> {
-                  existingValue,
-                  propValue
-                };
-              propertyCategoryBase[ key ] = arrayPropValue;
-            }
-
-          }
-
-        }
-
-        if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && categoryName != null ) {
+        if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.DisplayName != null ) {
           if ( propertiesBase != null ) {
 
-            if ( categoryName == "Geometry" ) {
+            string propertyCategoryDisplayName = SanitizePropertyName( propertyCategory.DisplayName );
+
+            if ( propertyCategory.DisplayName == "Geometry" ) {
               continue;
             }
 
-            if ( categoryName == "Item" ) {
-              //propertiesBase[ "Item_" ] = propertyCategoryBase;
-
+            if ( propertyCategory.DisplayName == "Item" ) {
               foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
                 elementBase[ property ] = propertyCategoryBase[ property ];
               }
-
-
             } else {
-              propertiesBase[ categoryName ] = propertyCategoryBase;
+              propertiesBase[ propertyCategoryDisplayName ] = propertyCategoryBase;
             }
           }
         }
-
-
       }
+
+      elementBase[ "QuickProperties" ] = QuickProperties;
       elementBase[ "Properties" ] = propertiesBase;
 
       if ( element == geometry.ModelItem ) {
@@ -441,7 +484,13 @@ namespace Rimshot.Shared.Plugin {
         if ( element.Children.Count() > 0 ) {
           for ( int d = 0; d < element.Children.Count(); d++ ) {
             ModelItem child = element.Children.ElementAt( d );
-            var bbot = BuildBaseObjectTree( child, geometry );
+            Base bbot = BuildBaseObjectTree( child, geometry );
+
+            if ( ( bbot[ "displayValue" ] is null ) || bbot.GetDynamicMembers().Contains( "displayValue" ) == false ) {
+              Console.WriteLine( child.DisplayName );
+            }
+
+
             children.Add( bbot );
           }
           elementBase[ "@Elements" ] = children;
@@ -481,7 +530,9 @@ namespace Rimshot.Shared.Plugin {
       }
 
       if ( element.InstanceGuid != null ) {
-        elementBase[ "InstanceGuid" ] = element.InstanceGuid;
+        if ( element.InstanceGuid.ToByteArray().Select( x => ( int )x ).Sum() > 0 ) {
+          elementBase[ "InstanceGuid" ] = element.InstanceGuid;
+        }
       }
 
       if ( element.ClassDisplayName != null ) {
@@ -665,7 +716,7 @@ namespace Rimshot.Shared.Plugin {
         int c = 0;
         for ( int d = 0; d < descendantsCount; d++ ) {
           ModelItem child = element.Children.ElementAt( d );
-          double progress = ( ( double )d + 1 ) / ( double )descendantsCount * 100;
+          double progress = ( ( double )d + 1 ) / descendantsCount * 100;
           int c2 = ( int )Math.Truncate( progress );
 
           if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
@@ -699,18 +750,18 @@ namespace Rimshot.Shared.Plugin {
           dynamic propValue = null;
 
           switch ( property.Value.DataType ) {
-            case VariantDataType.Boolean: propValue = property.Value.ToBoolean().ToString(); break;
+            case VariantDataType.Boolean: propValue = property.Value.ToBoolean(); break;
             case VariantDataType.DisplayString: propValue = property.Value.ToDisplayString(); break;
             case VariantDataType.IdentifierString: propValue = property.Value.ToIdentifierString(); break;
-            case VariantDataType.Int32: propValue = property.Value.ToInt32().ToString(); break;
-            case VariantDataType.Double: propValue = property.Value.ToDouble().ToString(); break;
-            case VariantDataType.DoubleAngle: propValue = property.Value.ToDoubleAngle().ToString(); break;
-            case VariantDataType.DoubleArea: propValue = property.Value.ToDoubleArea().ToString(); break;
-            case VariantDataType.DoubleLength: propValue = property.Value.ToDoubleLength().ToString(); break;
-            case VariantDataType.DoubleVolume: propValue = property.Value.ToDoubleVolume().ToString(); break;
-            case VariantDataType.DateTime: propValue = property.Value.ToDateTime().ToString(); break;
-            case VariantDataType.NamedConstant: propValue = property.Value.ToNamedConstant().ToString(); break;
-            case VariantDataType.Point3D: propValue = property.Value.ToPoint3D().ToString(); break;
+            case VariantDataType.Int32: propValue = property.Value.ToInt32(); break;
+            case VariantDataType.Double: propValue = property.Value.ToDouble(); break;
+            case VariantDataType.DoubleAngle: propValue = property.Value.ToDoubleAngle(); break;
+            case VariantDataType.DoubleArea: propValue = property.Value.ToDoubleArea(); break;
+            case VariantDataType.DoubleLength: propValue = property.Value.ToDoubleLength(); break;
+            case VariantDataType.DoubleVolume: propValue = property.Value.ToDoubleVolume(); break;
+            case VariantDataType.DateTime: propValue = property.Value.ToDateTime(); break;
+            case VariantDataType.NamedConstant: propValue = property.Value.ToNamedConstant(); break;
+            case VariantDataType.Point3D: propValue = property.Value.ToPoint3D(); break;
             case VariantDataType.None: break;
           }
 
@@ -760,6 +811,11 @@ namespace Rimshot.Shared.Plugin {
     public string SanitizePropertyName ( string name ) {
       // Regex pattern from speckle-sharp/Core/Core/Models/DynamicBase.cs IsPropNameValid
       string cleanName = Regex.Replace( name, @"[\.\/]", "_" );
+
+      if ( cleanName == "Item" ) {
+        cleanName = "$Item";
+      }
+
       return cleanName;
     }
 
@@ -783,7 +839,7 @@ namespace Rimshot.Shared.Plugin {
           for ( int t = 0; t < triangleCount; t += 1 ) {
 
             // TODO: work out a performant way to keep a progress UI element up to date.
-            double progress = ( ( double )t + 1 ) / ( double )triangleCount * 100;
+            double progress = ( ( double )t + 1 ) / triangleCount * 100;
             int c2 = ( int )Math.Truncate( progress );
 
             if ( Math.Truncate( progress ) % Modulo == 0 && c != c2 ) {
@@ -845,7 +901,6 @@ namespace Rimshot.Shared.Plugin {
     }
 
     private void SendIssueView () {
-
       MemoryStream stream;
       byte[] imageBytes;
       Guid id = Guid.NewGuid();
@@ -859,7 +914,7 @@ namespace Rimshot.Shared.Plugin {
       ComApi.InwOpState10 oState = ComBridge.State;
       ComApi.InwOaPropertyVec options = oState.GetIOPluginOptions( "lcodpimage" );
 
-      _tempFolder = Path.Combine( Path.GetTempPath(), "Rimshot.ExportBCF", Path.GetRandomFileName() );
+      this._tempFolder = Path.Combine( Path.GetTempPath(), "Rimshot.ExportBCF", Path.GetRandomFileName() );
 
       string snapshotFolder = Path.Combine( this._tempFolder, issueSnapshot.guid.ToString() );
       string snapshotFile = Path.Combine( snapshotFolder, issueSnapshot.name + ".png" );
@@ -904,6 +959,23 @@ namespace Rimshot.Shared.Plugin {
 
       SetImage( imageString );
       NotifyUI( "new-image", imageString );
+    }
+
+    private List<Tuple<NamedConstant, NamedConstant>> LoadQuickProperties () {
+      List<Tuple<NamedConstant, NamedConstant>> quickProperties_CategoryPropertyPairs = new List<Tuple<NamedConstant, NamedConstant>>();
+      using ( LcUOptionLock optionLock = new LcUOptionLock() ) {
+        LcUOptionSet set = LcUOption.GetSet( "interface.smart_tags.definitions", optionLock );
+        int numOptions = set.GetNumOptions();
+        if ( numOptions > 0 ) {
+          for ( int index = 0; index < numOptions; ++index ) {
+            LcUOptionSet lcUoptionSet = set.GetValue( index, null );
+            NamedConstant cat = lcUoptionSet.GetName( "category" ).GetPtr();
+            NamedConstant prop = lcUoptionSet.GetName( "property" ).GetPtr();
+            quickProperties_CategoryPropertyPairs.Add( Tuple.Create( cat, prop ) );
+          }
+        }
+      }
+      return quickProperties_CategoryPropertyPairs;
     }
   }
 
@@ -950,17 +1022,17 @@ namespace Rimshot.Shared.Plugin {
       decimal v3__y = ( Matrix[ 1 ] * v3_x + Matrix[ 5 ] * v3_y + Matrix[ 9 ] * v3_z + Matrix[ 13 ] ) / w3;
       decimal v3__z = ( Matrix[ 2 ] * v3_x + Matrix[ 6 ] * v3_y + Matrix[ 10 ] * v3_z + Matrix[ 14 ] ) / w3;
 
-      Coords.Add( ( decimal )v1__x );
-      Coords.Add( ( decimal )v1__y );
-      Coords.Add( ( decimal )v1__z );
+      Coords.Add( v1__x );
+      Coords.Add( v1__y );
+      Coords.Add( v1__z );
 
-      Coords.Add( ( decimal )v2__x );
-      Coords.Add( ( decimal )v2__y );
-      Coords.Add( ( decimal )v2__z );
+      Coords.Add( v2__x );
+      Coords.Add( v2__y );
+      Coords.Add( v2__z );
 
-      Coords.Add( ( decimal )v3__x );
-      Coords.Add( ( decimal )v3__y );
-      Coords.Add( ( decimal )v3__z );
+      Coords.Add( v3__x );
+      Coords.Add( v3__y );
+      Coords.Add( v3__z );
     }
   }
 }

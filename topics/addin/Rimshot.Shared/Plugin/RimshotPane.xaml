@@ -5,7 +5,7 @@
   xmlns:cefSharp="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  Width="450"
+  Width="400" Height="400"
   mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
