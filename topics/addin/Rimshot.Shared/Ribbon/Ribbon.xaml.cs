@@ -4,14 +4,14 @@ using System.Text;
 using System.Windows.Forms;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
-namespace Rimshot.Shared {
+namespace Rimshot {
 
   [Plugin( "Rimshot", "Rimshot", DisplayName = "Rimshot" )]
   [Strings( "Ribbon.name" )]
   [RibbonLayout( "Ribbon.xaml" )]
   [RibbonTab( "Rimshot", DisplayName = "Rimshot", LoadForCanExecute = true )]
 
-  [Command( Tools.IssueList.Command,
+  [Command( IssueList.Command,
              CallCanExecute = CallCanExecute.DocumentNotClear,
              Icon = "icon_register16.ico",
              LargeIcon = "icon_register32.ico",
@@ -22,7 +22,7 @@ namespace Rimshot.Shared {
              DisplayName = "Register"
              )]
 
-  [Command( Tools.Speckle.Command,
+  [Command( Speckle.Command,
              CallCanExecute = CallCanExecute.DocumentNotClear,
              Icon = "icon_speckle16.ico",
              LargeIcon = "icon_speckle32.ico",
@@ -40,7 +40,7 @@ namespace Rimshot.Shared {
       CommandState state = new CommandState( true );
 
       switch ( commandId ) {
-        case Tools.ShowOnly.Command: {
+        case ShowOnly.Command: {
 
             if ( NavisworksApp.ActiveDocument.CurrentSelection.IsEmpty ) {
               state.IsEnabled = false;
@@ -49,7 +49,7 @@ namespace Rimshot.Shared {
             break;
           }
 
-        case Tools.ShowAlso.Command: {
+        case ShowAlso.Command: {
 
             if ( NavisworksApp.ActiveDocument.CurrentSelection.IsEmpty ) {
               state.IsEnabled = false;
@@ -139,28 +139,28 @@ namespace Rimshot.Shared {
       switch ( commandId ) {
 
         // Show Only Selected Elements
-        case Tools.ShowOnly.Command: {
+        case ShowOnly.Command: {
             Selections.ShowSelected( showOnlySelected: true );
             break;
           }
         // Show Only Selected Elements
-        case Tools.ShowAlso.Command: {
+        case ShowAlso.Command: {
             Selections.ShowSelected();
             break;
           }
 
         // Show Export BCF
         // This is a pane based tool
-        case Tools.BCFExport.Command: {
-            LoadPlugin( plugin: Tools.BCFExport.Plugin, command: commandId );
+        case BCFExport.Command: {
+            LoadPlugin( plugin: BCFExport.Plugin, command: commandId );
             break;
           }
 
 
         // Show Issue List
         // This is a pane based tool
-        case Tools.IssueList.Command: {
-            LoadPlugin( plugin: Tools.IssueList.Plugin, command: commandId );
+        case IssueList.Command: {
+            LoadPlugin( plugin: IssueList.Plugin, command: commandId );
             break;
           }
 

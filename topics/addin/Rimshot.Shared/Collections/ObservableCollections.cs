@@ -42,7 +42,7 @@ namespace Rimshot {
   /// of future developement and uniformation to other Jira/BCF plugins
   /// </summary>
   public class IssueBCF {
-    public SavedViewpoint savedViewpoint {
+    public SavedViewpoint SavedViewpoint {
       get; set;
     }
 

@@ -1,9 +1,7 @@
-﻿
-using Rimshot.Shared.Plugin;
-using Speckle.Core.Logging;
+﻿using Speckle.Core.Logging;
 using System;
 
-namespace Rimshot.Shared {
+namespace Rimshot {
   public static class Logging {
     public static void ConsoleLog ( string message, ConsoleColor color = ConsoleColor.Magenta ) {
       Console.ForegroundColor = color;

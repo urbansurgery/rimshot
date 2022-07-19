@@ -1,13 +1,12 @@
 ﻿using Autodesk.Navisworks.Api.Plugins;
-using Rimshot.Shared.Plugin;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 
-namespace Rimshot.Shared.IssueList {
+namespace Rimshot {
 
   #region WebViewPlugin
 
-  [Plugin( Tools.IssueList.Plugin, "Rimshot", DisplayName = "Rimshot", ToolTip = "Issue Register" )]
+  [Plugin( IssueList.Plugin, "Rimshot", DisplayName = "Rimshot", ToolTip = "Issue Register" )]
   [DockPanePlugin( 400, 400, FixedSize = false )]
 
   class WebViewPlugin : DockPanePlugin {

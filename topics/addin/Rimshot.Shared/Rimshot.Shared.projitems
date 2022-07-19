@@ -6,20 +6,22 @@
     <SharedGUID>8083c28b-0b2e-4c07-abb6-84b900042533</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
-    <Import_RootNamespace>Rimshot.Shared</Import_RootNamespace>
+    <Import_RootNamespace>Rimshot</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Collections\ObservableCollections.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\IssueConverter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\TreeConverter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\VisibConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Colors.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Materials.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\ToSpeckle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Units.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\ArrayExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Geometry\Geometry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\Logging.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Properties\Properties.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Properties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.xaml.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Speckle\Speckle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Tools\Tools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugin\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Types.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IfcGuid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\TaskProgress.cs" />

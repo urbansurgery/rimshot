@@ -2,11 +2,8 @@
 using Autodesk.Navisworks.Api.DocumentParts;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
-namespace Rimshot.Shared {
+namespace Rimshot {
   public class Selections {
-
-    public Selections () {
-    }
 
     public static void ShowSelected ( bool showOnlySelected = false, bool clearSelectionAfterShow = true ) {
 
@@ -30,7 +27,7 @@ namespace Rimshot.Shared {
 
       selectionSet.ExplicitModelItems.AddRange( selectedItems );
 
-      Views.ShowSelectionSet_COM( selectionSet );
+      Views.Views.ShowSelectionSet_COM( selectionSet );
 
       if ( clearSelectionAfterShow ) {
         activeDocument.CurrentSelection.Clear();

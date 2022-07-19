@@ -1,5 +1,5 @@
 ﻿<UserControl  
-  x:Class="Rimshot.Shared.Plugin.RimshotPane"
+  x:Class="Rimshot.RimshotPane"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:cefSharp="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"

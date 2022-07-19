@@ -6,7 +6,7 @@
     xmlns:system="clr-namespace:System;assembly=mscorlib" 
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
     xmlns:gui="clr-namespace:Autodesk.Navisworks.Gui.Roamer.AIRLook;assembly=navisworks.gui.roamer"
-    xmlns:tools="clr-namespace:Rimshot.Tools;assembly=Rimshot.Rimshot">
+    xmlns:tools="clr-namespace:Rimshot;assembly=Rimshot.Rimshot">
     <RibbonTab Id="Rimshot" KeyTip="GR">
 
         <!-- WORKSHOP -->

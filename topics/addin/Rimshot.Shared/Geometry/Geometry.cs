@@ -1,14 +1,15 @@
 ﻿using Autodesk.Navisworks.Api;
+using Objects.Geometry;
+using Rimshot.ArrayExtensions;
+using Rimshot.Conversions;
+using Speckle.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
 
-namespace Rimshot.Shared {
-
-  using Rimshot.Shared.ArrayExtensions;
-  using Speckle.Core.Models;
-
+namespace Rimshot.Geometry {
   public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB {
     public List<double> Coords { get; set; }
 
@@ -203,7 +204,7 @@ namespace Rimshot.Shared {
 
       double[] retval = new double[ arr.GetLength( 0 ) ];
       for ( int ix = arr.GetLowerBound( 0 ); ix <= arr.GetUpperBound( 0 ); ++ix ) {
-        retval[ ix - arr.GetLowerBound( 0 ) ] = ( double )( double )arr.GetValue( ix );
+        retval[ ix - arr.GetLowerBound( 0 ) ] = ( double )arr.GetValue( ix );
       }
 
       return retval;
@@ -279,6 +280,158 @@ namespace Rimshot.Shared {
         Vertices.Add( triangle.Vertex3.Y );
         Vertices.Add( triangle.Vertex3.Z );
       }
+    }
+
+
+  }
+
+  public class Geometry {
+
+    public Vector3D TransformVector3D { get; set; }
+    public Vector SettingOutPoint { get; set; }
+    public Vector TransformVector { get; set; }
+
+    public Dictionary<int[], Stack<ComApi.InwOaFragment3>> pathDictionary = new Dictionary<int[], Stack<ComApi.InwOaFragment3>>();
+    public Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>> modelGeometryDictionary =
+      new Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>>();
+
+    public HashSet<NavisGeometry> GeometrySet = new HashSet<NavisGeometry>();
+
+    public readonly ModelItemCollection selectedItems = new ModelItemCollection();
+    public readonly ModelItemCollection selectedItemsAndDescendants = new ModelItemCollection();
+
+    public Geometry () { }
+
+
+    /// <summary>
+    /// Parse all descendant nodes of the element that are visible, selected and geometry nodes.
+    /// </summary>
+    public List<ModelItem> CollectGeometryNodes ( ModelItem element ) {
+      ModelItemEnumerableCollection descendants = element.DescendantsAndSelf;
+
+      // if the descendant node isn't hidden, has geometry and is part of the original selection set.
+
+      List<ModelItem> items = new List<ModelItem>();
+
+      foreach ( ModelItem item in descendants ) {
+        bool hasGeometry = item.HasGeometry;
+        bool isVisible = !item.IsHidden;
+        bool isSelected = selectedItemsAndDescendants.IsSelected( item );
+
+        if ( hasGeometry && isVisible && isSelected ) {
+          items.Add( item );
+        }
+      }
+
+      return items;
+    }
+
+    public void AddFragments ( NavisGeometry geometry ) {
+
+      geometry.ModelFragments = new Stack<ComApi.InwOaFragment3>();
+
+      foreach ( ComApi.InwOaPath path in geometry.ComSelection.Paths() ) {
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+
+          int[] a1 = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          int[] a2 = ( ( Array )path.ArrayData ).ToArray<int>();
+          bool isSame = true;
+
+          if ( a1.Length != a2.Length || !Enumerable.SequenceEqual( a1, a2 ) ) {
+            isSame = false;
+          }
+
+          if ( isSame ) {
+            geometry.ModelFragments.Push( frag );
+          }
+        }
+      }
+    }
+
+    public void GetSortedFragments ( ModelItemCollection modelItems ) {
+      ComApi.InwOpSelection oSel = ComBridge.ToInwOpSelection( modelItems );
+      // To be most efficient you need to lookup an efficient EqualityComparer
+      // for the int[] key
+      foreach ( ComApi.InwOaPath3 path in oSel.Paths() ) {
+        // this yields ONLY unique fragments
+        // ordered by geometry they belong to
+        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
+          int[] pathArr = ( ( Array )frag.path.ArrayData ).ToArray<int>();
+          if ( !this.pathDictionary.TryGetValue( pathArr, out Stack<ComApi.InwOaFragment3> frags ) ) {
+            frags = new Stack<ComApi.InwOaFragment3>();
+            this.pathDictionary[ pathArr ] = frags;
+          }
+          frags.Push( frag );
+        }
+      }
+    }
+
+    public void TranslateGeometryElement ( NavisGeometry geometryElement ) {
+      Base elementBase = new Base();
+
+      if ( geometryElement.ModelItem.HasGeometry && geometryElement.ModelItem.Children.Count() == 0 ) {
+        List<Base> speckleGeometries = TranslateFragmentGeometry( geometryElement );
+        if ( speckleGeometries.Count > 0 ) {
+          elementBase[ "displayValue" ] = speckleGeometries;
+          elementBase[ "units" ] = "m";
+          elementBase[ "bbox" ] = ToSpeckle.BoxToSpeckle( geometryElement.ModelItem.BoundingBox() );
+        }
+      }
+      geometryElement.Geometry = elementBase;
+    }
+
+    public List<Base> TranslateFragmentGeometry ( NavisGeometry navisGeometry ) {
+      List<CallbackGeomListener> callbackListeners = navisGeometry.GetUniqueFragments();
+
+      List<Base> baseGeometries = new List<Base>();
+
+      foreach ( CallbackGeomListener callback in callbackListeners ) {
+        List<NavisDoubleTriangle> Triangles = callback.Triangles;
+        // TODO: Additional Geometry Types
+        //List<NavisDoubleLine> Lines = callback.Lines;
+        //List<NavisDoublePoint> Points = callback.Points;
+
+        List<double> vertices = new List<double>();
+        List<int> faces = new List<int>();
+
+        Vector3D move = TransformVector3D;
+
+        int triangleCount = Triangles.Count;
+        if ( triangleCount > 0 ) {
+
+          for ( int t = 0; t < triangleCount; t += 1 ) {
+            double scale = ( double )0.001; // TODO: This will need to relate to the ActiveDocument reality and the target units. Probably metres.
+
+            // Apply the bounding box move.
+            // The native API methods for overriding transforms are not thread safe to call from the CEF instance
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex1.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex1.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex1.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex2.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex2.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex2.Z + move.Z ) * scale
+            } );
+            vertices.AddRange( new List<double>() {
+              ( Triangles[ t ].Vertex3.X + move.X ) * scale,
+              ( Triangles[ t ].Vertex3.Y + move.Y ) * scale,
+              ( Triangles[ t ].Vertex3.Z + move.Z ) * scale
+            } );
+
+            // TODO: Move this back to Geometry.cs
+            faces.Add( 0 );
+            faces.Add( t * 3 );
+            faces.Add( t * 3 + 1 );
+            faces.Add( t * 3 + 2 );
+          }
+          Mesh baseMesh = new Mesh( vertices, faces );
+          baseMesh[ "renderMaterial" ] = Materials.TranslateMaterial( navisGeometry.ModelItem );
+          baseGeometries.Add( baseMesh );
+        }
+      }
+      return baseGeometries; // TODO: Check if this actually has geometries before adding to DisplayValue
     }
   }
 }

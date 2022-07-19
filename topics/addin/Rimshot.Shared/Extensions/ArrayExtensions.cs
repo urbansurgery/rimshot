@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace Rimshot.Shared.ArrayExtensions {
+namespace Rimshot.ArrayExtensions {
   internal static class ArrayExtension {
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -1,4 +1,4 @@
-﻿namespace Rimshot.Tools {
+﻿namespace Rimshot {
   public static class BCFExport {
     public const string Plugin = "Rimshot.BCFPlugin";
     public const string Command = "Rimshot_Button_ExportBCF";
