@@ -182,10 +182,10 @@ namespace Rimshot {
       // Iterate the selected elements regardless of their position in the tree.
       HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
 
-      HashSet<ModelItem> firstObjectsInSelection = new HashSet<ModelItem>();
-      ConcurrentStack<Base> UniqueGeometryNodes = new ConcurrentStack<Base>();
+      //HashSet<ModelItem> firstObjectsInSelection = new HashSet<ModelItem>();
+      //ConcurrentStack<Base> UniqueGeometryNodes = new ConcurrentStack<Base>();
       ConcurrentDictionary<NavisGeometry, bool> geometryDict = new ConcurrentDictionary<NavisGeometry, bool>();
-      ConcurrentDictionary<ModelItem, NavisGeometry> geometryNodeMap = new ConcurrentDictionary<ModelItem, NavisGeometry>();
+      //ConcurrentDictionary<ModelItem, NavisGeometry> geometryNodeMap = new ConcurrentDictionary<ModelItem, NavisGeometry>();
 
       int elementCount = this.geometry.selectedItems.Count;
 
@@ -194,10 +194,13 @@ namespace Rimshot {
         ModelItem element = this.geometry.selectedItems[ e ];
         List<ModelItem> geometryNodes = this.geometry.CollectGeometryNodes( element ); // All relevant geometry nodes as children of whatever is selected.
 
+
+        int gCount = geometryNodes.Count;
         foreach ( ModelItem n in geometryNodes ) {
           NavisGeometry g = new NavisGeometry( n );
           bool addedGeometry = geometryDict.TryAdd( g, true );
-          geometryNodeMap.TryAdd( n, g );
+          //geometryNodeMap.TryAdd( n, g );
+          Logging.ConsoleLog( $"{geometryDict.Keys.Count} of {gCount}", ConsoleColor.Green );
         }
       }
 

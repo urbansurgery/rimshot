@@ -312,6 +312,7 @@ namespace Rimshot.Geometry {
       // if the descendant node isn't hidden, has geometry and is part of the original selection set.
 
       List<ModelItem> items = new List<ModelItem>();
+      int dCount = descendants.Count();
 
       foreach ( ModelItem item in descendants ) {
         bool hasGeometry = item.HasGeometry;
@@ -321,6 +322,8 @@ namespace Rimshot.Geometry {
         if ( hasGeometry && isVisible && isSelected ) {
           items.Add( item );
         }
+
+        Logging.ConsoleLog( $"Collecting Geometry Nodes {items.Count} of possible {dCount}", ConsoleColor.DarkYellow );
       }
 
       return items;
