@@ -4,6 +4,15 @@
   import IssueList from '@/components/IssueList.vue';
   import { mapActions, mapState, Store } from 'vuex';
 
+  function parseJson(json) {
+    try {
+      return JSON.parse(json);
+    } catch (_e) {
+      return json;
+      s;
+    }
+  }
+
   export default {
     name: 'ListView',
     components: {},
@@ -60,7 +69,7 @@
 
       window.EventBus.$on('element-progress', (payload) => {
         if (payload) {
-          const { current, count } = JSON.parse(payload);
+          const { current, count } = parseJson(payload);
           // console.log({ elements: [current, count] });
           this.$store.commit('SET_ELEMENT_PROGRESS', current / count);
         }
@@ -68,7 +77,7 @@
 
       window.EventBus.$on('nested-progress', (payload) => {
         if (payload) {
-          const { current, count } = JSON.parse(payload);
+          const { current, count } = parseJson(payload);
           // console.log({ nested: payload });
           this.$store.commit('SET_NESTED_PROGRESS', current / count);
         }
@@ -76,7 +85,7 @@
 
       window.EventBus.$on('geometry-progress', (payload) => {
         if (payload) {
-          const { current, count } = JSON.parse(payload);
+          const { current, count } = parseJson(payload);
           // console.log({ geometry: payload });
           this.$store.commit('SET_GEOMETRY_PROGRESS', current / count);
         }
@@ -84,19 +93,24 @@
 
       window.EventBus.$on('commit_sent', (commit_payload) => {
         if (commit_payload) {
-          // console.log({ commit: commit_payload });
-          const { stream, issueId, commit, objectId: object } = commit_payload;
+          const { streamId, issueId, commitId, objectId } =
+            parseJson(commit_payload);
 
-          this.$store
-            .dispatch('RECORD_ISSUE_COMMIT', {
-              issueId,
-              commit,
-              stream,
-              object,
-            })
-            .then(() => {
-              this.$store.commit('CANCEL_COMMIT_PROGRESS', { issueId });
-            });
+          if (streamId && issueId && commitId && objectId) {
+            this.$store
+              .dispatch('RECORD_ISSUE_COMMIT', {
+                issueId,
+                commitId,
+                streamId,
+                objectId,
+              })
+              .then(() => {
+                this.$store.commit('CANCEL_COMMIT_PROGRESS', { issueId });
+              });
+          } else if (!commitId) {
+            // TODO: handle the non-selected objects case.
+            this.$store.commit('CANCEL_COMMIT_PROGRESS', { issueId });
+          }
         }
       });
 

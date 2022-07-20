@@ -31,17 +31,17 @@ export default {
     }
   },
   SET_ELEMENT_PROGRESS: (state, progress) => {
-    const { count, current } = JSON.parse(progress);
+    const { count, current } = progress;
     state.commitElements = count == 0 ? 0 : Math.round((current / count) * 100);
     // console.log(state.commitGeometry, progress);
   },
   SET_NESTED_PROGRESS: (state, progress) => {
-    const { count, current } = JSON.parse(progress);
+    const { count, current } = progress;
     state.commitNested = count == 0 ? 0 : Math.round((current / count) * 100);
     // console.log(state.commitGeometry, progress);
   },
   SET_GEOMETRY_PROGRESS: (state, progress) => {
-    const { count, current } = JSON.parse(progress);
+    const { count, current } = progress;
     state.commitGeometry = count == 0 ? 0 : Math.round((current / count) * 100);
     // console.log(state.commitGeometry, progress);
   },
