@@ -79,9 +79,7 @@ namespace Rimshot {
       this.Browser.GetMainFrame().LoadUrl( Url );
     }
 
-    public virtual void AddImage () => this.SendIssueView();
-
-    public virtual void CommitSelection ( object payload ) => CommitSelectedObjectsToSpeckle( payload );
+    public virtual void AddImage () => SendIssueView();
 
     public virtual string UpdateView ( string camera ) {
       Logging.ConsoleLog( camera );
@@ -98,7 +96,7 @@ namespace Rimshot {
     /// </summary>
     /// <param name="payload"></param>
     /// <param name="commitMessage">Allows for the calling UI to override this and include a custom commit message.</param>
-    private async void CommitSelectedObjectsToSpeckle ( object payload, string commitMessage = "Rimshot commit." ) {
+    public async void CommitSelection ( object payload, string commitMessage = "Rimshot commit." ) {
 
       Logging.ConsoleLog( "Negotiating with the Speckle Server." );
 
