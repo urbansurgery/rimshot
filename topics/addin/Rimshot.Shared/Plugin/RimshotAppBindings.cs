@@ -143,7 +143,12 @@ namespace Rimshot {
       if ( this.geometry.selectedItems.IsEmpty ) {
         Logging.ConsoleLog( "Nothing Selected." );
         NotifyUI( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
-        NotifyUI( "commit_sent", new { commit = "", speckle.rimshotIssueId, stream = speckle.StreamId, objectId = "" } );
+        NotifyUI( "commit_sent", new {
+          commitId = "",
+          issueId = speckle.rimshotIssueId,
+          streamId = speckle.StreamId,
+          objectId = ""
+        } );
         return;
       }
 
@@ -232,7 +237,7 @@ namespace Rimshot {
         TranslateHierarchyElement( navisGeometry );
 
         //doneElements.Push( true );
-        NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = doneElements.Count, count = geometrySet.Count } ) );
+        NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = n, count = keyList.Count } ) );
         Logging.ConsoleLog( $"Element {n} of {geometryDict.Keys.Count}" );
         //} ) 
         //);
@@ -278,7 +283,12 @@ namespace Rimshot {
       Commit commitObject = speckle.Client.CommitGet( speckle.StreamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
-      NotifyUI( "commit_sent", new { commit = commitId, this.speckle.rimshotIssueId, stream = this.speckle.StreamId, objectId = referencedObject } );
+      NotifyUI( "commit_sent", new {
+        commitId,
+        issueId = this.speckle.rimshotIssueId,
+        streamId = this.speckle.StreamId,
+        objectId = referencedObject
+      } );
     }
 
     public void TranslateHierarchyElement ( NavisGeometry geometrynode ) {
