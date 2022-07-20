@@ -100,14 +100,9 @@ namespace Rimshot.Conversions {
             ModelItem child = element.Children.ElementAt( d );
             Base bbot = BuildBaseObjectTree( child, geometry, QuickPropertyDefinitions, ref QuickProperties );
 
-
             if ( bbot != null ) {
-              if ( child.Geometry == null ) {
+              if ( child.Geometry == null || child == geometry.ModelItem ) {
                 children.Add( bbot );
-              } else if ( child == geometry.ModelItem ) {
-                children.Add( bbot );
-              } else {
-                Console.WriteLine( child.DisplayName );
               }
             }
           }
