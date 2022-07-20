@@ -102,10 +102,12 @@ namespace Rimshot.Conversions {
 
             if ( ( bbot[ "displayValue" ] is null ) || bbot.GetDynamicMembers().Contains( "displayValue" ) == false ) {
               Console.WriteLine( child.DisplayName );
+            } else {
+
+              children.Add( bbot );
+
             }
 
-
-            children.Add( bbot );
           }
           elementBase[ "@Elements" ] = children;
         }
