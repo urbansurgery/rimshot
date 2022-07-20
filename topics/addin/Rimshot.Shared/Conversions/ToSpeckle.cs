@@ -100,16 +100,22 @@ namespace Rimshot.Conversions {
             ModelItem child = element.Children.ElementAt( d );
             Base bbot = BuildBaseObjectTree( child, geometry, QuickPropertyDefinitions, ref QuickProperties );
 
-            if ( ( bbot[ "displayValue" ] is null ) || bbot.GetDynamicMembers().Contains( "displayValue" ) == false ) {
-              Console.WriteLine( child.DisplayName );
-            } else {
 
-              children.Add( bbot );
-
+            if ( bbot != null ) {
+              if ( child.Geometry == null ) {
+                children.Add( bbot );
+              } else if ( child == geometry.ModelItem ) {
+                children.Add( bbot );
+              } else {
+                Console.WriteLine( child.DisplayName );
+              }
             }
-
           }
-          elementBase[ "@Elements" ] = children;
+
+          if ( children.Count > 0 ) {
+            elementBase[ "@Elements" ] = children;
+          }
+
         }
       }
 
@@ -166,8 +172,5 @@ namespace Rimshot.Conversions {
 
       return elementBase;
     }
-
-
-
   }
 }
