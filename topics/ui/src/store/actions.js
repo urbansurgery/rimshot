@@ -154,13 +154,38 @@ export default {
 
     db.collection('views').add(view);
   },
-  ADD_ISSUE: async (_, { number = 1, created, workshopId, deleted }) => {
-    const issue = {
-      created,
-      number,
-      workshopId,
-      deleted,
+  ADD_ISSUE: async ({ state }, { issue }) => {
+    if (!issue) throw 'No issue present.';
+
+    console.log(issue);
+
+    //TODO: Define the schema in templates
+    const defaults = {
+      created: new Date(),
+      workshopId: state.activeWorkshop,
+      deleted: false,
+      summary: '',
     };
+
+    let validIssue = Object.entries(defaults)
+      .slice(0)
+      .reduce((valid, entry, i, arr) => {
+        if (!valid) return valid;
+        const validTest = issue.hasOwnProperty(entry[0]);
+        if (!validTest) {
+          console.warn(`Issue missing ${entry[0]}`);
+          valid = false;
+
+          arr.splice(1); // if any of the entries are invalid, return false
+        }
+        //TODO: validate issue property types from the schema.
+        // if the issue doesn't have the property, return false
+        return validTest;
+      }, true);
+
+    if (!validIssue) throw 'Invalid issue';
+
+    issue ??= defaults;
 
     return db
       .collection('issues')
@@ -174,7 +199,6 @@ export default {
     commit('SET_SELECTED_ISSUE', issue);
     const now = firebase.firestore.Timestamp.fromDate(new Date());
 
-    console.log({ issue });
     db.collection('workshops').doc(workshop).update({
       viewingIssue: issue,
       lastViewed: now,
@@ -219,14 +243,14 @@ export default {
   },
   RECORD_ISSUE_COMMIT: (
     { commit },
-    { issueId, commit: commitId, stream, object }
+    { issueId, commitId, streamId, objectId }
   ) => {
-    commit('SET_ISSUE_COMMIT', { issueId, commit, stream, object });
+    commit('SET_ISSUE_COMMIT', { issueId, commitId, streamId, objectId });
 
     db.collection('issues').doc(issueId).update({
       speckle_commit: commitId,
-      speckle_stream: stream,
-      speckle_commit_object: object,
+      speckle_stream: streamId,
+      speckle_commit_object: objectId,
     });
   },
   SET_ELEMENT_PROGRESS: ({ commit }, progress) => {

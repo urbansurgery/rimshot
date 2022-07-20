@@ -3,6 +3,8 @@ import Vuex from 'vuex';
 
 import { db } from '@/plugins/firebase';
 
+import createPersistedState from 'vuex-persist-indexeddb';
+
 import mutations from './mutations';
 import actions from './actions';
 import state from './state';
@@ -19,4 +21,10 @@ export const store = new Vuex.Store({
   mutations,
   modules: {},
   strict: debug,
+  plugins: [
+    createPersistedState({
+      key: 'rimshot',
+      paths: ['activeWorkshop', 'activeProject', 'activeIssue'],
+    }),
+  ],
 });

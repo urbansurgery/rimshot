@@ -25,7 +25,7 @@
     <iframe
       id="speckle-viewer"
       class="responsive"
-      :src="`https://speckle.xyz/embed?stream=${input.stream}&object=${input.object}&c=${input.c}&overlay=${input.overlay}&filter=${input.filter}`"
+      :src="`https://speckle.xyz/embed?transparent=true&stream=${input.stream}&object=${input.object}&c=${input.c}&overlay=${input.overlay}&filter=${input.filter}`"
     />
   </div>
 </template>

@@ -16,7 +16,7 @@
       route(to) {
         this.$store.commit(
           'SET_EMBEDDED',
-          Boolean(window.UIBindings) || to.query.pane
+          Boolean(window.UIBindings) || Boolean(to.query.pane)
         );
       },
     },

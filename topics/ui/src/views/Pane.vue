@@ -5,7 +5,7 @@
 
   import IssuesGrid from '@/components/Issues.vue';
   import WorkshopSelector from '@/components/Selector.vue';
-
+  import { templates } from '@/store/state';
   export default Vue.extend({
     name: 'PaneView',
     components: {
@@ -28,14 +28,22 @@
         projects: (state) => state.projects,
         workshops: (state) => state.workshops,
         selectedIssue: (state) => state.activeIssue,
+        isEmbedded: (state) => state.isEmbedded,
+        issues: (state) => state.issues,
+        currentWorkshop: (state) => state.currentWorkshop,
+        currentProject: (state) => state.currentProject,
       }),
-      ...mapGetters(['liveProjects', 'selectedWorkshops']),
+      ...mapGetters(['liveProjects']),
       workshopList() {
         if (this.selectedProject) {
-          return sortByKey(
-            this.selectedWorkshops(this.selectedProject),
-            'number',
-            'desc'
+          return sortByKey(this.projectWorkshops, 'number', 'desc');
+        }
+        return [];
+      },
+      projectWorkshops() {
+        if (this.selectedProject) {
+          return this.workshops.filter(
+            (workshop) => workshop?.project?.key === this.currentProject.key
           );
         }
         return [];
@@ -46,9 +54,6 @@
         );
 
         return workshops[0]?.link;
-      },
-      isEmbedded() {
-        return Boolean(window.UIBindings) || this.$route.query.pane === true;
       },
       isDevMode() {
         return Boolean(Vue.config.devtools);
@@ -76,6 +81,24 @@
           this.$store.commit('SET_SELECTED_PROJECT', project);
         },
       },
+      nextIssue() {
+        let number = this.issues.length + 1;
+        const issue = {
+          ...templates.issue,
+          number,
+          workshopId: this.selectedWorkshop,
+          projectId: this.selectedProject,
+          deleted: false,
+        };
+
+        Object.keys(issue).forEach((key) => {
+          if (issue[key] === undefined) {
+            delete issue[key];
+          }
+        });
+
+        return issue;
+      },
     },
     watch: {},
     mounted: function () {
@@ -98,17 +121,26 @@
 
         if (e.target) {
           var link = e.target;
-
-          const textArea = document.createElement('textarea');
-          textArea.value = link.href;
-
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-
-          document.execCommand('copy');
-          textArea.remove();
+          await navigator.clipboard.writeText(link.href);
           this.snackbar.copy = true;
+        }
+      },
+      async addIssue(e) {
+        e.stopPropagation();
+        console.log(e);
+
+        const newIssue = await this.$store.dispatch('ADD_ISSUE', {
+          issue: this.nextIssue,
+        });
+
+        if (!newIssue) return (this.selectedIssue = undefined);
+
+        const { id: issueId, index } = newIssue;
+
+        if (issueId === this.selectedIssue) {
+          this.selectedIssue = undefined;
+        } else {
+          this.$store.commit('SET_SELECTED_ISSUE', issueId);
         }
       },
     },
@@ -125,6 +157,16 @@
         :project-id="selectedProject"
         :embedded="isEmbedded"
       />
+      <v-btn
+        bottom
+        right
+        fab
+        color="complementary"
+        style="position: fixed; bottom: 4rem; right: 2rem; z-index: 100"
+        @click="addIssue"
+      >
+        <v-icon>mdi-plus</v-icon></v-btn
+      >
       <v-row class="pa-6 mt-0 text-caption link-management"
         ><v-col
           v-if="selectedWorkshop && (isEmbedded || isDevMode) && workshopLink"
