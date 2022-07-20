@@ -243,14 +243,14 @@ export default {
   },
   RECORD_ISSUE_COMMIT: (
     { commit },
-    { issueId, commit: commitId, stream, object }
+    { issueId, commitId, streamId, objectId }
   ) => {
-    commit('SET_ISSUE_COMMIT', { issueId, commit, stream, object });
+    commit('SET_ISSUE_COMMIT', { issueId, commitId, streamId, objectId });
 
     db.collection('issues').doc(issueId).update({
       speckle_commit: commitId,
-      speckle_stream: stream,
-      speckle_commit_object: object,
+      speckle_stream: streamId,
+      speckle_commit_object: objectId,
     });
   },
   SET_ELEMENT_PROGRESS: ({ commit }, progress) => {
