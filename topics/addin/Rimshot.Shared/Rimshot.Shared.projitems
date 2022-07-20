@@ -6,28 +6,57 @@
     <SharedGUID>8083c28b-0b2e-4c07-abb6-84b900042533</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
-    <Import_RootNamespace>Rimshot.Shared</Import_RootNamespace>
+    <Import_RootNamespace>Rimshot</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Collections\ObservableCollections.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\IssueConverter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\TreeConverter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Converters\VisibConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Colors.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Materials.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\ToSpeckle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Units.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\ArrayExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Geometry\Geometry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logging\Logging.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Conversions\Properties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.xaml.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Speckle\Speckle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Tools\Tools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugin\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Types.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IfcGuid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\TaskProgress.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Views\Views.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Workshop\IssueList.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Workshop\IssueListPane.xaml.cs">
-      <DependentUpon>IssueListPane.xaml</DependentUpon>
+    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotPlugin.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotPane.xaml.cs">
+      <DependentUpon>RimshotPane.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)Workshop\IssueListUIBindings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotAppBindings.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon-register.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon-speckle.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_register32.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_register16.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_register_QL5_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_speckle16.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_speckle32.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\icon_speckle_9e5_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo.ico" />
     <Content Include="$(MSBuildThisFileDirectory)Images\logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -42,6 +71,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\logo32.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\rimshot_16.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Images\rimshot_32.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)Images\rimshot.ico">
@@ -68,7 +103,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)Workshop\IssueListPane.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)Plugin\RimshotPane.xaml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>

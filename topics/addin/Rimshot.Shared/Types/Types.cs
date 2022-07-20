@@ -82,7 +82,7 @@ namespace Rimshot.Analysis {
     }
 
     public CoordPt ( COMApi.InwSimpleVertex vertex ) {
-      Array arrayVertex = ( Array )( object )vertex.coord;
+      Array arrayVertex = ( Array )vertex.coord;
 
       double vX = Convert.ToDouble( arrayVertex.GetValue( 1 ) );
       double vY = Convert.ToDouble( arrayVertex.GetValue( 2 ) );
