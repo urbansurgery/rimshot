@@ -110,7 +110,7 @@ namespace Rimshot {
         return;
       }
 
-      this.geometry.GeometrySet.Clear();
+      //this.geometry.GeometrySet.Clear();
 
       UIBindings app = this;
 
@@ -180,7 +180,7 @@ namespace Rimshot {
 
       // Thread safe collections
       // Iterate the selected elements regardless of their position in the tree.
-      HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
+      //HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
 
       //HashSet<ModelItem> firstObjectsInSelection = new HashSet<ModelItem>();
       //ConcurrentStack<Base> UniqueGeometryNodes = new ConcurrentStack<Base>();
