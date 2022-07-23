@@ -299,7 +299,7 @@ namespace Rimshot.Geometry {
         if ( hasGeometry && isVisible && isSelected ) {
           modelItems.Add( item );
         }
-        if ( modelItems.Count % 10 == 0 ) {
+        if ( modelItems.Count > 0 && modelItems.Count % 10 == 0 ) {
           Logging.ConsoleLog( $"Collecting Geometry Nodes {modelItems.Count} of possible {dCount}", ConsoleColor.DarkYellow );
         }
       }
