@@ -1,12 +1,12 @@
 ﻿using Autodesk.Navisworks.Api;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Color = System.Drawing.Color;
 
 namespace Rimshot.Conversions {
   class Materials {
     static public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
-
-      string materialName;
 
       var Settings = new { Mode = "original" };
 
@@ -27,11 +27,14 @@ namespace Rimshot.Conversions {
           break;
       }
 
-      materialName = $"NavisMaterial_{Math.Abs( renderColor.ToArgb() )}";
+      string materialName = $"NavisMaterial_{Math.Abs( renderColor.ToArgb() )}";
 
       Color black = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
 
-      PropertyCategory itemCategory = geom.PropertyCategories.FindCategoryByDisplayName( "Item" );
+      // One of the Points of AccessViolationException.
+      List<PropertyCategory> propertyCategories = geom.GetUserFilteredPropertyCategories().ToList();
+
+      PropertyCategory itemCategory = propertyCategories.Where( p => p.DisplayName == "Item" ).FirstOrDefault();
       if ( itemCategory != null ) {
         DataPropertyCollection itemProperties = itemCategory.Properties;
         DataProperty itemMaterial = itemProperties.FindPropertyByDisplayName( "Material" );
@@ -40,7 +43,7 @@ namespace Rimshot.Conversions {
         }
       }
 
-      PropertyCategory materialPropertyCategory = geom.PropertyCategories.FindCategoryByDisplayName( "Material" );
+      PropertyCategory materialPropertyCategory = propertyCategories.Where( p => p.DisplayName == "Material" ).FirstOrDefault();
       if ( materialPropertyCategory != null ) {
         DataPropertyCollection material = materialPropertyCategory.Properties;
         DataProperty name = material.FindPropertyByDisplayName( "Name" );

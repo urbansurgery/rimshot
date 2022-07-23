@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
-using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge; //
+using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 
 namespace Rimshot.Geometry {
   public class CallbackGeomListener : ComApi.InwSimplePrimitivesCB {
@@ -78,21 +78,9 @@ namespace Rimshot.Geometry {
       this.Coords.Add( v3Z_ );
       this.Faces.Add( indexPointer + 2 );
 
-      // Append all translated Triangle faces
-      //this.Triangles.Add(
-      //  new NavisTriangle(
-      //    new NavisVertex( ( float )v1X_, ( float )v1Y_, ( float )v1Z_ ),
-      //    new NavisVertex( ( float )v2X_, ( float )v2Y_, ( float )v2Z_ ),
-      //    new NavisVertex( ( float )v3X_, ( float )v3Y_, ( float )v3Z_ )
-      //  )
-      //);
-      this.Triangles.Add(
-   new NavisDoubleTriangle(
-     new NavisDoubleVertex( v1X_, v1Y_, v1Z_ ),
-     new NavisDoubleVertex( v2X_, v2Y_, v2Z_ ),
-     new NavisDoubleVertex( v3X_, v3Y_, v3Z_ )
-   )
- );
+      this.Triangles.Add( new NavisDoubleTriangle( v1: new NavisDoubleVertex( v1X_, v1Y_, v1Z_ ),
+                                                   v2: new NavisDoubleVertex( v2X_, v2Y_, v2Z_ ),
+                                                   v3: new NavisDoubleVertex( v3X_, v3Y_, v3Z_ ) ) );
     }
   }
 
@@ -107,12 +95,10 @@ namespace Rimshot.Geometry {
 
       this.ModelItem = modelItem;
 
-      // Add conversion geometry to oModelColl Property
       ModelItemCollection modelitemCollection = new ModelItemCollection {
         modelItem
       };
 
-      //convert to COM selection
       this.ComSelection = ComBridge.ToInwOpSelection( modelitemCollection );
     }
 
@@ -185,7 +171,6 @@ namespace Rimshot.Geometry {
 
           callbackListener.Matrix = elementsValue;
           fragment.GenerateSimplePrimitives( ComApi.nwEVertexProperty.eNORMAL, callbackListener );
-
         }
         callbackListeners.Add( callbackListener );
       }
@@ -281,8 +266,6 @@ namespace Rimshot.Geometry {
         Vertices.Add( triangle.Vertex3.Z );
       }
     }
-
-
   }
 
   public class Geometry {
@@ -292,16 +275,11 @@ namespace Rimshot.Geometry {
     public Vector TransformVector { get; set; }
 
     public Dictionary<int[], Stack<ComApi.InwOaFragment3>> pathDictionary = new Dictionary<int[], Stack<ComApi.InwOaFragment3>>();
-    public Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>> modelGeometryDictionary =
-      new Dictionary<NavisGeometry, Stack<ComApi.InwOaFragment3>>();
-
-    public HashSet<NavisGeometry> GeometrySet = new HashSet<NavisGeometry>();
 
     public readonly ModelItemCollection selectedItems = new ModelItemCollection();
     public readonly ModelItemCollection selectedItemsAndDescendants = new ModelItemCollection();
 
     public Geometry () { }
-
 
     /// <summary>
     /// Parse all descendant nodes of the element that are visible, selected and geometry nodes.
@@ -310,8 +288,7 @@ namespace Rimshot.Geometry {
       ModelItemEnumerableCollection descendants = element.DescendantsAndSelf;
 
       // if the descendant node isn't hidden, has geometry and is part of the original selection set.
-
-      List<ModelItem> items = new List<ModelItem>();
+      List<ModelItem> modelItems = new List<ModelItem>();
       int dCount = descendants.Count();
 
       foreach ( ModelItem item in descendants ) {
@@ -320,13 +297,14 @@ namespace Rimshot.Geometry {
         bool isSelected = selectedItemsAndDescendants.IsSelected( item );
 
         if ( hasGeometry && isVisible && isSelected ) {
-          items.Add( item );
+          modelItems.Add( item );
         }
-
-        Logging.ConsoleLog( $"Collecting Geometry Nodes {items.Count} of possible {dCount}", ConsoleColor.DarkYellow );
+        if ( modelItems.Count % 10 == 0 ) {
+          Logging.ConsoleLog( $"Collecting Geometry Nodes {modelItems.Count} of possible {dCount}", ConsoleColor.DarkYellow );
+        }
       }
 
-      return items;
+      return modelItems;
     }
 
     public void AddFragments ( NavisGeometry geometry ) {
@@ -352,19 +330,17 @@ namespace Rimshot.Geometry {
     }
 
     public void GetSortedFragments ( ModelItemCollection modelItems ) {
-      ComApi.InwOpSelection oSel = ComBridge.ToInwOpSelection( modelItems );
-      // To be most efficient you need to lookup an efficient EqualityComparer
-      // for the int[] key
-      foreach ( ComApi.InwOaPath3 path in oSel.Paths() ) {
-        // this yields ONLY unique fragments
-        // ordered by geometry they belong to
-        foreach ( ComApi.InwOaFragment3 frag in path.Fragments() ) {
-          int[] pathArr = ( ( Array )frag.path.ArrayData ).ToArray<int>();
-          if ( !this.pathDictionary.TryGetValue( pathArr, out Stack<ComApi.InwOaFragment3> frags ) ) {
-            frags = new Stack<ComApi.InwOaFragment3>();
-            this.pathDictionary[ pathArr ] = frags;
+      ComApi.InwOpSelection pseudoSelection = ComBridge.ToInwOpSelection( modelItems );
+
+      foreach ( ComApi.InwOaPath3 objectPath in pseudoSelection.Paths() ) {
+        foreach ( ComApi.InwOaFragment3 fragment in objectPath.Fragments() ) {
+          int[] pathStore = ( ( Array )fragment.path.ArrayData ).ToArray<int>();
+
+          if ( !this.pathDictionary.TryGetValue( pathStore, out Stack<ComApi.InwOaFragment3> fragments ) ) {
+            fragments = new Stack<ComApi.InwOaFragment3>();
+            this.pathDictionary[ pathStore ] = fragments;
           }
-          frags.Push( frag );
+          fragments.Push( fragment );
         }
       }
     }
@@ -374,6 +350,7 @@ namespace Rimshot.Geometry {
 
       if ( geometryElement.ModelItem.HasGeometry && geometryElement.ModelItem.Children.Count() == 0 ) {
         List<Base> speckleGeometries = TranslateFragmentGeometry( geometryElement );
+
         if ( speckleGeometries.Count > 0 ) {
           elementBase[ "displayValue" ] = speckleGeometries;
           elementBase[ "units" ] = "m";

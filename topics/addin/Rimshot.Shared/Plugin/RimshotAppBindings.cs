@@ -43,6 +43,7 @@ namespace Rimshot {
 
     private readonly List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions = new List<Tuple<NamedConstant, NamedConstant>>();
     private Base QuickProperties;
+    private readonly SpeckleServer SpeckleServer = new SpeckleServer();
 
     // base64 encoding of the image
     public virtual string GetImage () => this.image;
@@ -88,9 +89,6 @@ namespace Rimshot {
 
     public Document ActiveDocument { get; set; }
 
-    private readonly Geometry.Geometry geometry = new Geometry.Geometry();
-    private readonly SpeckleServer speckle = new SpeckleServer();
-
     /// <summary>
     /// Adds an hierarchical object based on the current selection and commits to the selected issue Branch. If no branch exists, one is created.
     /// </summary>
@@ -98,35 +96,36 @@ namespace Rimshot {
     /// <param name="commitMessage">Allows for the calling UI to override this and include a custom commit message.</param>
     public async void CommitSelection ( object payload, string commitMessage = "Rimshot commit." ) {
 
+      Geometry.Geometry geometry = new Geometry.Geometry();
+
+      this.QuickPropertyDefinitions.Clear();
+
       Logging.ConsoleLog( "Negotiating with the Speckle Server." );
 
       dynamic commitPayload = payload;
 
-      this.speckle.HostUrl = commitPayload.host;
-      this.speckle.rimshotIssueId = commitPayload.issueId;
+      SpeckleServer.HostUrl = commitPayload.host;
+      SpeckleServer.rimshotIssueId = commitPayload.issueId;
 
-      if ( speckle.HostUrl != speckle.Client.ServerUrl ) {
-        Logging.ErrorLog( $"Host server Url for the issue ({speckle.HostUrl}) does not match the client server Url ({speckle.Client.ServerUrl}). Please check your configuration." );
+      if ( SpeckleServer.HostUrl != SpeckleServer.Client.ServerUrl ) {
+        Logging.ErrorLog( $"Host server Url for the issue ({SpeckleServer.HostUrl}) does not match the client server Url ({SpeckleServer.Client.ServerUrl}). Please check your configuration." );
         return;
       }
 
-      //this.geometry.GeometrySet.Clear();
-
       UIBindings app = this;
 
-      speckle.RimshotApp = app;
+      SpeckleServer.RimshotApp = app;
 
-      string description = $"issueId:{speckle.rimshotIssueId}";
+      string description = $"issueId:{SpeckleServer.rimshotIssueId}";
 
-      if ( speckle.Client == null ) { return; }
+      if ( SpeckleServer.Client == null ) { return; }
 
-      await speckle.TryGetStream( commitPayload.stream );
-      await speckle.TryGetBranch( commitPayload.branch, description );
+      await SpeckleServer.TryGetStream( commitPayload.stream );
+      await SpeckleServer.TryGetBranch( commitPayload.branch, description );
 
-      if ( speckle.Branch == null || speckle.Stream == null ) { return; };
+      if ( SpeckleServer.Branch == null || SpeckleServer.Stream == null ) { return; };
 
-      Logging.ConsoleLog( $"Stream: {speckle.StreamId}, Host: {speckle.HostUrl}, Branch: {speckle.BranchName}, Issue: {speckle.rimshotIssueId}" );
-
+      Logging.ConsoleLog( $"Stream: {SpeckleServer.StreamId}, Host: {SpeckleServer.HostUrl}, Branch: {SpeckleServer.BranchName}, Issue: {SpeckleServer.rimshotIssueId}" );
 
       // Current document, models and selected elements.
       ActiveDocument = NavisworksApp.ActiveDocument;
@@ -134,39 +133,39 @@ namespace Rimshot {
       ModelItemCollection appSelectedItems = NavisworksApp.ActiveDocument.CurrentSelection.SelectedItems;
 
       // Were the selection to change mid-commit, accessing the selected set would fail.
+      appSelectedItems.CopyTo( geometry.selectedItems );
+      appSelectedItems.DescendantsAndSelf.CopyTo( geometry.selectedItemsAndDescendants );
 
-      appSelectedItems.CopyTo( this.geometry.selectedItems );
-      appSelectedItems.DescendantsAndSelf.CopyTo( this.geometry.selectedItemsAndDescendants );
-
-      if ( this.geometry.selectedItems.IsEmpty ) {
+      if ( geometry.selectedItems.IsEmpty ) {
         Logging.ConsoleLog( "Nothing Selected." );
         NotifyUI( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
         NotifyUI( "commit_sent", new {
           commitId = "",
-          issueId = speckle.rimshotIssueId,
-          streamId = speckle.StreamId,
+          issueId = SpeckleServer.rimshotIssueId,
+          streamId = SpeckleServer.StreamId,
           objectId = ""
         } );
         return;
       }
 
       // Setup Setting Out Location and translation
-      ModelItem firstItem = this.geometry.selectedItems.First();
+      ModelItem firstItem = geometry.selectedItems.First();
       ModelItem root = firstItem.Parent ?? firstItem;
       ModelGeometry temp = root.FindFirstGeometry();
 
       BoundingBox3D modelBoundingBox = temp.BoundingBox;
       Point3D center = modelBoundingBox.Center;
 
-      this.geometry.TransformVector3D = new Vector3D( -center.X, -center.Y, 0 ); // 2D translation parallel to world XY
+      // 2D translation parallel to world XY
+      geometry.TransformVector3D = new Vector3D( -center.X, -center.Y, 0 );
 
-      this.geometry.SettingOutPoint = new Objects.Geometry.Vector {
+      geometry.SettingOutPoint = new Objects.Geometry.Vector {
         x = modelBoundingBox.Min.X,
         y = modelBoundingBox.Min.Y,
         z = 0
       };
 
-      this.geometry.TransformVector = new Objects.Geometry.Vector {
+      geometry.TransformVector = new Objects.Geometry.Vector {
         x = 0 - geometry.TransformVector3D.X,
         y = 0 - geometry.TransformVector3D.Y,
         z = 0
@@ -180,116 +179,96 @@ namespace Rimshot {
 
       // Thread safe collections
       // Iterate the selected elements regardless of their position in the tree.
-      //HashSet<NavisGeometry> geometrySet = new HashSet<NavisGeometry>();
+      ConcurrentDictionary<NavisGeometry, bool> uniqueGeometryNodes = new ConcurrentDictionary<NavisGeometry, bool>();
+      ConcurrentBag<Base> elementsToCommit = new ConcurrentBag<Base>();
 
-      //HashSet<ModelItem> firstObjectsInSelection = new HashSet<ModelItem>();
-      //ConcurrentStack<Base> UniqueGeometryNodes = new ConcurrentStack<Base>();
-      ConcurrentDictionary<NavisGeometry, bool> geometryDict = new ConcurrentDictionary<NavisGeometry, bool>();
-      //ConcurrentDictionary<ModelItem, NavisGeometry> geometryNodeMap = new ConcurrentDictionary<ModelItem, NavisGeometry>();
+      ConcurrentStack<bool> doneSelectedElements = new ConcurrentStack<bool>();
+      ConcurrentStack<bool> doneConvertedElements = new ConcurrentStack<bool>();
 
-      int elementCount = this.geometry.selectedItems.Count;
+      int selectedElementCount = geometry.selectedItems.Count;
 
-      for ( int e = 0; e < elementCount; e++ ) {
+      List<Task> conversionTasks = new List<Task>();
 
-        ModelItem element = this.geometry.selectedItems[ e ];
-        List<ModelItem> geometryNodes = this.geometry.CollectGeometryNodes( element ); // All relevant geometry nodes as children of whatever is selected.
+      foreach ( ModelItem modelItemToConvert in geometry.selectedItems ) {
 
+        conversionTasks.Add( Task.Run( () => {
+          // All relevant geometry nodes as children of whatever is selected.
+          List<ModelItem> geometryNodes = geometry.CollectGeometryNodes( modelItemToConvert );
 
-        int gCount = geometryNodes.Count;
-        foreach ( ModelItem n in geometryNodes ) {
-          NavisGeometry g = new NavisGeometry( n );
-          bool addedGeometry = geometryDict.TryAdd( g, true );
-          //geometryNodeMap.TryAdd( n, g );
-          Logging.ConsoleLog( $"{geometryDict.Keys.Count} of {gCount}", ConsoleColor.Green );
-        }
-      }
+          int nodeCount = geometryNodes.Count;
+          foreach ( ModelItem geometryNode in geometryNodes ) {
+            NavisGeometry nodeNavisGeometry = new NavisGeometry( geometryNode );
+            bool addedGeometry = uniqueGeometryNodes.TryAdd( nodeNavisGeometry, true );
 
-      ConcurrentStack<bool> doneElements = new ConcurrentStack<bool>();
+            if ( addedGeometry ) {
+              geometry.AddFragments( nodeNavisGeometry );
+            }
 
-      List<Task> fragmentTasks = new List<Task>();
-      foreach ( KeyValuePair<NavisGeometry, bool> entry in geometryDict ) {
-        fragmentTasks.Add( Task.Run( () => {
-          this.geometry.AddFragments( entry.Key );
-          doneElements.Push( true );
-          Logging.ConsoleLog( $"{doneElements.Count} of {geometryDict.Count}", ConsoleColor.DarkGreen );
+            geometry.TranslateGeometryElement( nodeNavisGeometry );
+
+            QuickProperties = new Base();
+
+            // Do the properties and hierarchy conversion work.
+            TranslateHierarchyElement( nodeNavisGeometry );
+
+            doneConvertedElements.Push( true );
+            if ( doneConvertedElements.Count % 10 == 0 ) {
+              Logging.ConsoleLog( $"Element {doneConvertedElements.Count} of {nodeCount}", ConsoleColor.DarkBlue );
+            }
+            elementsToCommit.Add( nodeNavisGeometry.Base );
+          }
+
+          doneSelectedElements.Push( true );
+
+          if ( doneSelectedElements.Count % 10 == 0 ) {
+            Logging.ConsoleLog( $"{doneSelectedElements.Count} of {selectedElementCount}", ConsoleColor.DarkGreen );
+          }
         } ) );
       }
-      Task t = Task.WhenAll( fragmentTasks );
 
-      t.Wait();
-
-      // Builds the geometries of interest.
-      //geometrySet.UnionWith( geometryDict.Keys );
-
-      //List<Task> translateGeometryTasks = new List<Task>();
-      //doneElements.Clear();
-
-      List<NavisGeometry> keyList = geometryDict.Keys.ToList();
-      for ( int n = 0; n < keyList.Count; n++ ) {
-        NavisGeometry navisGeometry = keyList[ n ];
-        //foreach ( NavisGeometry navisGeometry in geometryDict.Keys ) {
-        //translateGeometryTasks.Add( Task.Run( () => {
-        // Do the geometry conversion work.
-        this.geometry.TranslateGeometryElement( navisGeometry );
-
-        QuickProperties = new Base();
-
-        // Do the properties and hierarchy conversion work.
-        TranslateHierarchyElement( navisGeometry );
-
-        //doneElements.Push( true );
-        NotifyUI( "element-progress", JsonConvert.SerializeObject( new { current = n, count = keyList.Count } ) );
-        Logging.ConsoleLog( $"Element {n} of {geometryDict.Keys.Count}" );
-        //} ) 
-        //);
-      }
-
-      //t = Task.WhenAll( translateGeometryTasks );
-      //t.Wait();
-      // At this point we have a Dict with unique selected geometry nodes. These don't reflect the Object hierarchy.
-
-      // For each Geometry node now:
-      // Navigate up the tree to find the FirstObject Ancestor. (If none, the geometry node is the first object.
-      // The First Objects can then be traversed downward, nesting objects as we go.
-      // When a child is a geometry child, we already have that node isolated.
-      // Properties are then populated per branch child. (Property Categories + Geometry + ???) to "Parameters"
-      // Properties of the ancestors of a FirstObject can be added directly to the FirstObject Base aggregating into lists if necessary
+      Task.WhenAll( conversionTasks ).Wait();
 
       Base myCommit = new Base();
 
-      List<Base> Elements = new List<Base>();
-      foreach ( NavisGeometry e in geometryDict.Keys ) {
-        Elements.Add( e.Base );
-      }
-
-      myCommit[ "@Elements" ] = Elements;
-
-      this.geometry.selectedItems.Clear();
+      myCommit[ "@Elements" ] = elementsToCommit.ToList();
 
       string[] stringseparators = new string[] { "/" };
-      myCommit[ "Issue Number" ] = speckle.BranchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
-      myCommit[ "applicationId" ] = speckle.rimshotIssueId;
+      myCommit[ "Issue Number" ] = SpeckleServer.BranchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
+      myCommit[ "applicationId" ] = SpeckleServer.rimshotIssueId;
 
-      ServerTransport transport = new ServerTransport( speckle.Account, speckle.StreamId );
+      ServerTransport transport = new ServerTransport( SpeckleServer.Account, SpeckleServer.StreamId );
       string hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
 
-      string commitId = speckle.Client.CommitCreate( new CommitCreateInput() {
-        branchName = this.speckle.BranchName,
+      string commitId = SpeckleServer.Client.CommitCreate( new CommitCreateInput() {
+        branchName = SpeckleServer.BranchName,
         message = commitMessage,
         objectId = hash,
-        streamId = this.speckle.StreamId,
+        streamId = SpeckleServer.StreamId,
         sourceApplication = "Rimshot"
       } ).Result;
 
-      Commit commitObject = speckle.Client.CommitGet( speckle.StreamId, commitId ).Result;
+      Commit commitObject = SpeckleServer.Client.CommitGet( SpeckleServer.StreamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
       NotifyUI( "commit_sent", new {
         commitId,
-        issueId = this.speckle.rimshotIssueId,
-        streamId = this.speckle.StreamId,
+        issueId = SpeckleServer.rimshotIssueId,
+        streamId = SpeckleServer.StreamId,
         objectId = referencedObject
       } );
+
+      // Cleanup - No idea if it is all necessary 
+      try {
+        geometry.selectedItems.Clear();
+        geometry.selectedItemsAndDescendants.Clear();
+        geometry.pathDictionary.Clear();
+        uniqueGeometryNodes.Clear();
+        QuickPropertyDefinitions.Clear();
+        elementsToCommit = new ConcurrentBag<Base>();
+        uniqueGeometryNodes = new ConcurrentDictionary<NavisGeometry, bool>();
+      } catch ( Exception e ) {
+        Logging.ErrorLog( e.Message );
+      }
     }
 
     public void TranslateHierarchyElement ( NavisGeometry geometrynode ) {
@@ -330,17 +309,17 @@ namespace Rimshot {
 
       Directory.CreateDirectory( snapshotFolder );
 
-      foreach ( ComApi.InwOaProperty opt in options.Properties() ) {
-        if ( opt.name == "export.image.format" ) {
-          opt.value = "lcodpexpng";
+      foreach ( ComApi.InwOaProperty option in options.Properties() ) {
+        if ( option.name == "export.image.format" ) {
+          option.value = "lcodpexpng";
         }
 
-        if ( opt.name == "export.image.width" ) {
-          opt.value = 1600;
+        if ( option.name == "export.image.width" ) {
+          option.value = 1600;
         }
 
-        if ( opt.name == "export.image.height" ) {
-          opt.value = 900;
+        if ( option.name == "export.image.height" ) {
+          option.value = 900;
         }
       }
       oState.DriveIOPlugin( "lcodpimage", snapshotFile, options );

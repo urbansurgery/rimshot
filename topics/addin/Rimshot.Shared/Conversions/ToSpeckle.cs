@@ -35,22 +35,25 @@ namespace Rimshot.Conversions {
       Base propertiesBase = new Base();
 
       // GUI visible properties varies by a Global Options setting.
-      PropertyCategoryCollection propertyCategories = element.GetUserFilteredPropertyCategories();
+      List<PropertyCategory> propertyCategories = element.GetUserFilteredPropertyCategories().ToList();
 
-      // If Add QuickProperties is set.
       foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in QuickPropertyDefinitions ) {
-        PropertyCategory foundCategory = propertyCategories.FindCategoryByCombinedName( quickPropertyDef.Item1 );
+        // One of the Points of AccessViolationException.
+        PropertyCategory foundCategory = propertyCategories.Where( p => p.CombinedName == quickPropertyDef.Item1 ).FirstOrDefault();
+
+        Base quickPropertiesCategoryBase;
 
         if ( foundCategory != null ) {
-          DataProperty foundProperty = propertyCategories.FindPropertyByCombinedName( quickPropertyDef.Item1, quickPropertyDef.Item2 );
+          List<DataProperty> categoryProperties = foundCategory.Properties.ToList();
 
-          Base quickPropertiesCategoryBase;
+          // One of the Points of AccessViolationException.
+          DataProperty foundProperty = categoryProperties.Where( p => p.CombinedName == quickPropertyDef.Item2 ).FirstOrDefault();
 
           string foundCategoryName = Props.SanitizePropertyName( foundCategory.DisplayName );
-
           quickPropertiesCategoryBase = QuickProperties[ foundCategoryName ] == null ? new Base() : ( Base )QuickProperties[ foundCategoryName ];
 
           if ( foundProperty != null ) {
+
             Props.BuildPropertyCategory( foundCategory, foundProperty, ref quickPropertiesCategoryBase );
           }
 
@@ -59,10 +62,13 @@ namespace Rimshot.Conversions {
       }
 
       foreach ( PropertyCategory propertyCategory in propertyCategories ) {
-        DataPropertyCollection properties = propertyCategory.Properties;
-        Base propertyCategoryBase = new Base();
+        List<DataProperty> properties = new List<DataProperty>();
 
-        properties.ToList().ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
+        // One of the Points of AccessViolationException.
+        properties.AddRange( propertyCategory.Properties.ToList() );
+
+        Base propertyCategoryBase = new Base();
+        properties.ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
 
         if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.DisplayName != null ) {
           if ( propertiesBase != null ) {
