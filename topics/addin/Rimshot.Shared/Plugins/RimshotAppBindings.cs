@@ -1,6 +1,5 @@
 ﻿using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.DocumentParts;
-using CefSharp;
 using Rimshot.Conversions;
 using Rimshot.Geometry;
 using Rimshot.SpeckleApi;
@@ -23,20 +22,19 @@ using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 using Props = Rimshot.Conversions.Properties;
 
-namespace Rimshot {
+namespace Rimshot.Bindings {
+  public abstract class RimshotAppBindings : DefaultBindings {
 
-  public abstract class UIBindings {
-#if DEBUG
-    //const string rimshotUrl = "http://192.168.86.29:8080/issues";
-    const string rimshotUrl = "https://rimshot.app/issues";
+    public RimshotAppBindings () => AppName = "Rimshot";
+
+#if DEBUGUI
+    const string rimshotUrl = "http://192.168.86.29:8080/issues";
 #else
     const string rimshotUrl = "https://rimshot.app/issues";
 #endif
-    public const string Url = rimshotUrl;
+    public new const string Url = rimshotUrl;
     private const int Modulo = 5;
     private string _tempFolder = "";
-
-    public IWebBrowser Browser { get; set; }
 
     public RimshotPane Window { get; set; }
     private string image;
@@ -50,35 +48,6 @@ namespace Rimshot {
 
     // base64 encoding of the image
     public virtual void SetImage ( string value ) => this.image = value;
-
-    public virtual void NotifyUI ( string eventName, dynamic eventInfo ) {
-      string script = string.Format( "window.EventBus.$emit('{0}',{1})", eventName, JsonConvert.SerializeObject( eventInfo ) );
-      this.Browser.GetMainFrame().EvaluateScriptAsync( script );
-    }
-
-    public virtual void CommitStoreMutationUI ( string storeMutationName, string args = null ) {
-      string script = string.Format( "window.Store.commit('{0}', '{1}')", storeMutationName, args );
-      try {
-        this.Browser.GetMainFrame().EvaluateScriptAsync( script );
-      } catch ( Exception e ) {
-        Logging.ErrorLog( e.Message );
-      }
-    }
-
-    public virtual void DispatchStoreActionUI ( string storeActionName, string args = null ) {
-      string script = string.Format( "window.Store.dispatch('{0}', '{1}')", storeActionName, args );
-      try {
-        this.Browser.GetMainFrame().EvaluateScriptAsync( script );
-      } catch ( Exception e ) {
-        Logging.ErrorLog( e.Message );
-      }
-    }
-
-    public virtual void ShowDev () => this.Browser.ShowDevTools();
-    public virtual void Refresh ( bool force = false ) {
-      this.Browser.Reload( force );
-      this.Browser.GetMainFrame().LoadUrl( Url );
-    }
 
     public virtual void AddImage () => SendIssueView();
 
@@ -110,9 +79,8 @@ namespace Rimshot {
         return;
       }
 
-      UIBindings app = this;
-
-      this.SpeckleServer.RimshotApp = app;
+      RimshotAppBindings app = this;
+      this.SpeckleServer.App = app;
 
       string description = $"issueId:{this.SpeckleServer.rimshotIssueId}";
 

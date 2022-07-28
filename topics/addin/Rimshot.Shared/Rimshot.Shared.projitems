@@ -18,19 +18,25 @@
     <Compile Include="$(MSBuildThisFileDirectory)Geometry\Geometry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\Logging.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Conversions\Properties.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\AppBindings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\SpeckleAppBindings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\SpecklePane.xaml.cs">
+      <DependentUpon>SpecklePane.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\SpecklePlugin.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.xaml.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Speckle\Speckle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Plugin\Tools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Types.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IfcGuid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\TaskProgress.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Views\Views.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotPlugin.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotPane.xaml.cs">
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\RimshotPlugin.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\RimshotPane.xaml.cs">
       <DependentUpon>RimshotPane.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)Plugin\RimshotAppBindings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\RimshotAppBindings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)Images\icon-register.ico">
@@ -103,7 +109,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)Plugin\RimshotPane.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)Plugins\SpecklePane.xaml">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+      <Generator>XamlIntelliSenseFileGenerator</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)Plugins\RimshotPane.xaml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>

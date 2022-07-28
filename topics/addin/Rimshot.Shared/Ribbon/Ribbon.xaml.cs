@@ -11,7 +11,7 @@ namespace Rimshot {
   [RibbonLayout( "Ribbon.xaml" )]
   [RibbonTab( "Rimshot", DisplayName = "Rimshot", LoadForCanExecute = true )]
 
-  [Command( IssueList.Command,
+  [Command( Rimshot.Command,
              CallCanExecute = CallCanExecute.DocumentNotClear,
              Icon = "icon_register16.ico",
              LargeIcon = "icon_register32.ico",
@@ -109,7 +109,7 @@ namespace Rimshot {
     }
 
     public override int ExecuteCommand ( string commandId, params string[] parameters ) {
-      string buildVersion = "2020";
+      string buildVersion = "2022";
 
 #if IS2018
       buildVersion = "2018";
@@ -126,10 +126,13 @@ namespace Rimshot {
 #if IS2022
       buildVersion = "2022";
 #endif
+#if IS2023
+      buildVersion = "2023";
+#endif
 
       // Version
       if ( !NavisworksApp.Version.RuntimeProductName.Contains( buildVersion ) ) {
-        MessageBox.Show( "This Add-In was built for Navisworks " + buildVersion + ", please contact r+d@Rimshot.com for assistance...",
+        MessageBox.Show( "This Add-In was built for Navisworks " + buildVersion + ", please contact r+d@rimshot.com for assistance...",
                         "Cannot Continue!",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error );
@@ -149,23 +152,17 @@ namespace Rimshot {
             break;
           }
 
-        // Show Export BCF
         // This is a pane based tool
-        case BCFExport.Command: {
-            LoadPlugin( plugin: BCFExport.Plugin, command: commandId );
+        case Rimshot.Command: {
+            LoadPlugin( plugin: Rimshot.Plugin, command: commandId );
             break;
           }
 
-
-        // Show Issue List
         // This is a pane based tool
-        case IssueList.Command: {
-            LoadPlugin( plugin: IssueList.Plugin, command: commandId );
+        case Speckle.Command: {
+            LoadPlugin( plugin: Speckle.Plugin, command: commandId );
             break;
           }
-
-
-
 
         default: {
             MessageBox.Show( "You have clicked on the command with ID = '" + commandId + "'" );
@@ -175,6 +172,5 @@ namespace Rimshot {
 
       return 0;
     }
-
   }
 }

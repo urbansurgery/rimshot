@@ -18,13 +18,13 @@ namespace Rimshot.SpeckleApi {
     public Branch Branch { get; set; }
     public Stream Stream { get; set; }
 
-    public UIBindings RimshotApp { get; set; }
+    public Bindings.DefaultBindings App { get; set; }
 
     public SpeckleServer () {
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
       if ( defaultAccount == null ) {
-        Logging.ErrorLog( new SpeckleException( $"You do not have any accounts active. Please create one or add it to the Speckle Manager." ), this.RimshotApp );
+        Logging.ErrorLog( new SpeckleException( $"You do not have any accounts active. Please create one or add it to the Speckle Manager." ), this.App );
         return;
       }
 
@@ -42,7 +42,7 @@ namespace Rimshot.SpeckleApi {
       try {
         Stream = await Client.StreamGet( streamId );
       } catch {
-        Logging.ErrorLog( new SpeckleException( $"You don't have access to stream {streamId} on server {this.HostUrl}, or the stream does not exist." ), this.RimshotApp );
+        Logging.ErrorLog( new SpeckleException( $"You don't have access to stream {streamId} on server {this.HostUrl}, or the stream does not exist." ), this.App );
       }
     }
 
@@ -74,11 +74,11 @@ namespace Rimshot.SpeckleApi {
           try {
             Branch = await CreateBranch( name, description );
           } catch ( Exception ) {
-            Logging.ErrorLog( new SpeckleException( $"Unable to find an issue branch for {BranchName}" ), RimshotApp );
+            Logging.ErrorLog( new SpeckleException( $"Unable to find an issue branch for {BranchName}" ), App );
           }
         }
       } catch ( Exception ) {
-        Logging.ErrorLog( new SpeckleException( $"Unable to find or create an issue branch for {this.BranchName}" ), RimshotApp );
+        Logging.ErrorLog( new SpeckleException( $"Unable to find or create an issue branch for {this.BranchName}" ), App );
         return;
       }
 
@@ -87,10 +87,10 @@ namespace Rimshot.SpeckleApi {
           Branch = Client.BranchGet( this.StreamId, this.BranchName, 1 ).Result;
 
           if ( Branch != null ) {
-            RimshotApp.NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = Branch.name, rimshotIssueId } ) );
+            App.NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = Branch.name, rimshotIssueId } ) );
           }
         } catch ( Exception ) {
-          Logging.ErrorLog( new SpeckleException( $"Still unable to find an issue branch for {BranchName}" ), RimshotApp );
+          Logging.ErrorLog( new SpeckleException( $"Still unable to find an issue branch for {BranchName}" ), App );
           return;
         }
       }

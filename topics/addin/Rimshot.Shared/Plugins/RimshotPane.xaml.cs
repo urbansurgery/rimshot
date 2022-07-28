@@ -1,6 +1,7 @@
 ﻿using Autodesk.Navisworks.Api;
 using CefSharp;
 using CefSharp.Wpf;
+using Rimshot.Bindings;
 using Rimshot.Views;
 using Speckle.Newtonsoft.Json;
 using System;
@@ -34,13 +35,13 @@ namespace Rimshot {
   }
 
   public partial class RimshotPane : UserControl {
-    public class Bindings : UIBindings { }
+    public class Bindings : RimshotAppBindings { }
 
     public Bindings bindings;
 
     private readonly Document activeDocument = NavisworksApp.ActiveDocument;
 
-    public RimshotPane ( string address = Bindings.Url ) {
+    public RimshotPane ( string address = RimshotAppBindings.Url ) {
 
       InitializeCef();
       InitializeComponent();
@@ -66,7 +67,8 @@ namespace Rimshot {
       CefSettings settings = new CefSettings() {
         CachePath = Path.Combine( Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ), "CefSharp\\Cache" ),
         RemoteDebuggingPort = 8099,
-        PersistUserPreferences = true
+        PersistUserPreferences = true,
+        LogSeverity = LogSeverity.Error
       };
 
       try {
@@ -103,6 +105,10 @@ namespace Rimshot {
           Console.WriteLine( err.Message );
         }
       }
+    }
+
+    public static implicit operator RimshotPane ( SpecklePane v ) {
+      throw new NotImplementedException();
     }
   }
 }

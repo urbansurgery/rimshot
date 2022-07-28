@@ -15,4 +15,7 @@
     <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug UI local|x64'">
+    <StartArguments>-OpenFile "C:\Users\jbr\Desktop\Hackathon.nwf"</StartArguments>
+  </PropertyGroup>
 </Project>

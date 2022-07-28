@@ -3,38 +3,26 @@ using System.Windows.Forms;
 using System.Windows.Forms.Integration;
 
 namespace Rimshot {
-
-  #region WebViewPlugin
-
-  [Plugin( IssueList.Plugin, "Rimshot", DisplayName = "Rimshot", ToolTip = "Issue Register" )]
+  [Plugin( Speckle.Plugin, "Rimshot", DisplayName = "Speckle", ToolTip = "Speckle" )]
   [DockPanePlugin( 400, 400, FixedSize = false )]
 
-  class WebViewPlugin : DockPanePlugin {
+  class SpecklePlugin : DockPanePlugin {
 
+    // Called to tell the plugin to create it's pane.
+    // Should be overriden in conjunction with DestroyControlPane.
     public override Control CreateControlPane () {
-
-      // Called to tell the plugin to create it's pane.
-      // Should be overriden in conjunction with DestroyControlPane.
       ElementHost elementHost = new ElementHost {
         AutoSize = true,
-        Child = new RimshotPane( /*address: "https://rimshot.app/issues"*/ )
+        Child = new SpecklePane( /*address: "https://rimshot.app/speckleui"*/ )
       };
 
       elementHost.CreateControl();
 
       return elementHost;
-
     }
 
     // Called to tell the plugin to destroy it's pane.
     // Should be overriden in conjunction with CreateControlPane.
     public override void DestroyControlPane ( Control pane ) => pane.Dispose();
-
   }
-
-
-
-
-
-  #endregion
 }

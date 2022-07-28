@@ -8,7 +8,8 @@ namespace Rimshot {
       Console.WriteLine( message );
       Console.ForegroundColor = ConsoleColor.Gray;
     }
-    public static void ErrorLog ( Exception err, UIBindings app ) {
+
+    public static void ErrorLog ( Exception err, Bindings.DefaultBindings app ) {
       ErrorLog( err.Message );
 
       if ( err is SpeckleException ) {
