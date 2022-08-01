@@ -59,7 +59,7 @@ namespace Rimshot.Conversions {
           break;
       }
 
-      if ( propertyValue != null ) {
+      if ( propertyValue != null && propertyCategoryBase != null ) {
         object keyPropValue = propertyCategoryBase[ propertyName ];
 
         if ( keyPropValue == null ) {
@@ -86,7 +86,6 @@ namespace Rimshot.Conversions {
           }
         }
       }
-
     }
 
     public static List<Tuple<NamedConstant, NamedConstant>> LoadQuickProperties () {

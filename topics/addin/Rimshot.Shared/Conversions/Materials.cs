@@ -2,10 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
+using System.Security;
 using Color = System.Drawing.Color;
 
 namespace Rimshot.Conversions {
   class Materials {
+
+    [HandleProcessCorruptedStateExceptions, SecurityCritical]
     static public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
 
       var Settings = new { Mode = "original" };
@@ -32,8 +36,16 @@ namespace Rimshot.Conversions {
       Color black = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
 
       // One of the Points of AccessViolationException.
-      List<PropertyCategory> propertyCategories = geom.GetUserFilteredPropertyCategories().ToList();
 
+      List<PropertyCategory> propertyCategories;
+      try {
+        PropertyCategoryCollection c = geom.GetUserFilteredPropertyCategories();
+        propertyCategories = c.ToList();
+
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+        propertyCategories = new List<PropertyCategory>();
+      }
       PropertyCategory itemCategory = propertyCategories.Where( p => p.DisplayName == "Item" ).FirstOrDefault();
       if ( itemCategory != null ) {
         DataPropertyCollection itemProperties = itemCategory.Properties;
@@ -43,7 +55,14 @@ namespace Rimshot.Conversions {
         }
       }
 
-      PropertyCategory materialPropertyCategory = propertyCategories.Where( p => p.DisplayName == "Material" ).FirstOrDefault();
+      PropertyCategory materialPropertyCategory;
+      try {
+        materialPropertyCategory = propertyCategories.Where( p => p.DisplayName == "Material" ).FirstOrDefault();
+      } catch ( Exception e ) {
+        Console.WriteLine( $"MaterialProperty > {e.Message}" );
+        materialPropertyCategory = null;
+      }
+
       if ( materialPropertyCategory != null ) {
         DataPropertyCollection material = materialPropertyCategory.Properties;
         DataProperty name = material.FindPropertyByDisplayName( "Name" );

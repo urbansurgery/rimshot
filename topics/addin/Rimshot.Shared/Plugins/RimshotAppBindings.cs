@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Threading.Tasks;
 using System.Windows;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
@@ -234,11 +236,16 @@ namespace Rimshot.Bindings {
         Logging.ErrorLog( e.Message );
       }
     }
-
+    [HandleProcessCorruptedStateExceptions, SecurityCritical]
     public void TranslateHierarchyElement ( NavisGeometry geometrynode ) {
+      ModelItem firstObject;
+      try {
+        firstObject = geometrynode.ModelItem.FindFirstObjectAncestor();
 
-      ModelItem firstObject = geometrynode.ModelItem.FindFirstObjectAncestor();
-
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+        firstObject = null;
+      }
       // Geometry Object may be the first object.
       if ( firstObject == null ) {
         // Process the Geometry Base object as the root object.

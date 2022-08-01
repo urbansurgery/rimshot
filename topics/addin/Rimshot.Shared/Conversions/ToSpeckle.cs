@@ -5,7 +5,8 @@ using Speckle.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Runtime.ExceptionServices;
+using System.Security;
 using Props = Rimshot.Conversions.Properties;
 
 namespace Rimshot.Conversions {
@@ -25,7 +26,7 @@ namespace Rimshot.Conversions {
 
       return boundingBox;
     }
-
+    [HandleProcessCorruptedStateExceptions, SecurityCritical]
     public static Base BuildBaseObjectTree ( ModelItem element,
                                             NavisGeometry geometry,
                                             List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions,
@@ -33,65 +34,93 @@ namespace Rimshot.Conversions {
 
       Base elementBase = new Base();
       Base propertiesBase = new Base();
-
-      // GUI visible properties varies by a Global Options setting.
-      List<PropertyCategory> propertyCategories = element.GetUserFilteredPropertyCategories().ToList();
-
+      List<PropertyCategory> propertyCategories;
+      try {
+        // GUI visible properties varies by a Global Options setting.
+        propertyCategories = element.GetUserFilteredPropertyCategories().ToList();
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+        propertyCategories = new List<PropertyCategory>();
+      }
       foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in QuickPropertyDefinitions ) {
         // One of the Points of AccessViolationException.
-        PropertyCategory foundCategory = propertyCategories.Where( p => p.CombinedName == quickPropertyDef.Item1 ).FirstOrDefault();
+        PropertyCategory foundCategory;
+        try {
+          foundCategory = propertyCategories.Where( p => p.CombinedName == quickPropertyDef.Item1 ).FirstOrDefault();
+        } catch ( Exception e ) {
+          Console.WriteLine( e.Message );
+          foundCategory = null;
+        }
 
         Base quickPropertiesCategoryBase;
 
         if ( foundCategory != null ) {
-          List<DataProperty> categoryProperties = foundCategory.Properties.ToList();
-
-          // One of the Points of AccessViolationException.
-          DataProperty foundProperty = categoryProperties.Where( p => p.CombinedName == quickPropertyDef.Item2 ).FirstOrDefault();
-
-          string foundCategoryName = Props.SanitizePropertyName( foundCategory.DisplayName );
-          quickPropertiesCategoryBase = QuickProperties[ foundCategoryName ] == null ? new Base() : ( Base )QuickProperties[ foundCategoryName ];
-
-          if ( foundProperty != null ) {
-
-            Props.BuildPropertyCategory( foundCategory, foundProperty, ref quickPropertiesCategoryBase );
+          List<DataProperty> categoryProperties;
+          try {
+            categoryProperties = foundCategory.Properties.ToList();
+          } catch ( Exception e ) {
+            Console.WriteLine( e.Message );
+            categoryProperties = null;
           }
 
-          QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
+          if ( categoryProperties != null ) {
+            DataProperty foundProperty = categoryProperties.Where( p => p.CombinedName == quickPropertyDef.Item2 ).FirstOrDefault();
+
+            string foundCategoryName = Props.SanitizePropertyName( foundCategory.DisplayName );
+            Base qb = ( Base )QuickProperties[ foundCategoryName ];
+            bool v = QuickProperties[ foundCategoryName ] == null;
+
+            quickPropertiesCategoryBase = v ? new Base() : qb;
+
+            if ( foundProperty != null ) {
+
+              Props.BuildPropertyCategory( foundCategory, foundProperty, ref quickPropertiesCategoryBase );
+            }
+
+            QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
+          }
         }
       }
 
       foreach ( PropertyCategory propertyCategory in propertyCategories ) {
-        List<DataProperty> properties = new List<DataProperty>();
+        List<DataProperty> properties;
 
-        // One of the Points of AccessViolationException.
-        properties.AddRange( propertyCategory.Properties.ToList() );
+        try {
+          // One of the Points of AccessViolationException.
+          properties = new List<DataProperty>();
+          properties.AddRange( propertyCategory.Properties.ToList() );
+        } catch ( Exception e ) {
+          Console.WriteLine( e.Message );
+          properties = null;
+        }
 
-        Base propertyCategoryBase = new Base();
-        properties.ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
+        if ( properties != null ) {
 
-        if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.DisplayName != null ) {
-          if ( propertiesBase != null ) {
+          Base propertyCategoryBase = new Base();
+          properties.ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
 
-            string propertyCategoryDisplayName = Props.SanitizePropertyName( propertyCategory.DisplayName );
+          if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.DisplayName != null ) {
+            if ( propertiesBase != null ) {
 
-            if ( propertyCategory.DisplayName == "Geometry" ) {
-              continue;
-            }
+              string propertyCategoryDisplayName = Props.SanitizePropertyName( propertyCategory.DisplayName );
 
-            if ( propertyCategory.DisplayName == "Item" ) {
-              foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
-                elementBase[ property ] = propertyCategoryBase[ property ];
+              if ( propertyCategory.DisplayName == "Geometry" ) {
+                continue;
               }
-            } else {
-              propertiesBase[ propertyCategoryDisplayName ] = propertyCategoryBase;
+
+              if ( propertyCategory.DisplayName == "Item" ) {
+                foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
+                  elementBase[ property ] = propertyCategoryBase[ property ];
+                }
+              } else {
+                propertiesBase[ propertyCategoryDisplayName ] = propertyCategoryBase;
+              }
             }
           }
+          elementBase[ "Properties" ] = propertiesBase;
         }
+        elementBase[ "QuickProperties" ] = QuickProperties;
       }
-
-      elementBase[ "QuickProperties" ] = QuickProperties;
-      elementBase[ "Properties" ] = propertiesBase;
 
       if ( element == geometry.ModelItem ) {
         // Establish the node as the geometry node and copy through the existing conversion.
