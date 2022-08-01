@@ -4,8 +4,7 @@ using System.Windows.Forms.Integration;
 
 namespace Rimshot {
   [Plugin( Speckle.Plugin, "Rimshot", DisplayName = "Speckle", ToolTip = "Speckle" )]
-  [DockPanePlugin( 400, 400, FixedSize = false )]
-
+  [DockPanePlugin( 500, 800, FixedSize = false, AutoScroll = false, MinimumWidth = 100, MinimumHeight = 400 )]
   class SpecklePlugin : DockPanePlugin {
 
     // Called to tell the plugin to create it's pane.
@@ -13,9 +12,9 @@ namespace Rimshot {
     public override Control CreateControlPane () {
       ElementHost elementHost = new ElementHost {
         AutoSize = true,
-        Child = new SpecklePane( /*address: "https://rimshot.app/speckleui"*/ )
+        Child = new SpecklePane( /*address: "https://rimshot.app/speckleui"*/ ),
+        Dock = DockStyle.Fill
       };
-
       elementHost.CreateControl();
 
       return elementHost;
