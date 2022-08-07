@@ -6,7 +6,6 @@ namespace Rimshot {
   [Plugin( Rimshot.Plugin, "Rimshot", DisplayName = "Rimshot", ToolTip = "Rimshot Issue Register" )]
   [DockPanePlugin( 500, 800, FixedSize = false, AutoScroll = false, MinimumWidth = 100, MinimumHeight = 400 )]
   internal class RimshotPlugin : DockPanePlugin {
-
     // Called to tell the plugin to create it's pane.
     // Should be overriden in conjunction with DestroyControlPane.
     public override Control CreateControlPane () {
