@@ -11,7 +11,7 @@ export default {
       success: '#4caf50',
       text: '#222222',
       background: '#f5f6f7',
-      primary: '#FB047E',
+      primary: '#D675DA',
     },
     dark: {
       complementary: '#047EFB', //blue
@@ -23,7 +23,7 @@ export default {
       success: '#4caf50',
       text: '#FFFFFF',
       background: '#1a1a1a',
-      primary: '#FB047E',
+      primary: '#D675DA',
     },
   },
   options: {

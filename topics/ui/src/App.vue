@@ -56,6 +56,8 @@
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    min-width: 100px;
   }
 
   html {
