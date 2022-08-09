@@ -43,14 +43,14 @@
       projectWorkshops() {
         if (this.selectedProject) {
           return this.workshops.filter(
-            (workshop) => workshop?.project?.key === this.currentProject.key
+            (workshop) => workshop?.project?.key === this.currentProject?.key
           );
         }
         return [];
       },
       workshopLink() {
         const workshops = this.workshops.filter(
-          (workshop) => this.selectedIssue?.id === workshop.id
+          (workshop) => this.selectedIssue?.id === workshop?.id
         );
 
         return workshops[0]?.link;
@@ -59,7 +59,7 @@
         return Boolean(Vue.config.devtools);
       },
       route() {
-        if (this.$route && this.$route.meta) return this.$route.meta.title;
+        if (this.$route && this.$route.meta) return this.$route.meta?.title;
         return '';
       },
       href() {

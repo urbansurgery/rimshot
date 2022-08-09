@@ -30,9 +30,6 @@
       },
       projectWorkshops() {
         const workshops = this.workshops;
-
-        console.log(this.workshops);
-
         return workshops.filter(
           (workshop) => workshop?.project?.key === this.activeProject.key
         );
