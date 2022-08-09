@@ -5,9 +5,12 @@ using Rimshot.Bindings;
 using Rimshot.Views;
 using Speckle.Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 using Path = System.IO.Path;
 
@@ -39,9 +42,25 @@ namespace Rimshot {
 
     public Bindings bindings;
 
-    private readonly Document activeDocument = NavisworksApp.ActiveDocument;
+    System.Windows.Forms.Control syncControl;
 
+    public readonly Document activeDocument = NavisworksApp.ActiveDocument;
+
+    public void SetSelections ( IEnumerable<ModelItem> modelItems ) {
+
+      ModelItemCollection mo = new ModelItemCollection();
+      mo.CopyFrom( modelItems );
+
+      SavedItem s = new SelectionSet( mo );
+      s.DisplayName = "Banana";
+
+      this.activeDocument.SelectionSets.AddCopy( s );
+    }
     public RimshotPane ( string address = RimshotAppBindings.Url ) {
+
+      syncControl = new System.Windows.Forms.Control();
+      syncControl.CreateControl();
+      SynchronizationContext context = SynchronizationContext.Current;
 
       InitializeCef();
       InitializeComponent();
@@ -49,6 +68,8 @@ namespace Rimshot {
       this.bindings = new Bindings {
         Browser = this.Browser,
         Window = this,
+        UIThread = syncControl,
+        Context = context
       };
 
       this.Browser.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;

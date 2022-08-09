@@ -2,18 +2,27 @@
 using Speckle.Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Rimshot.Bindings {
 
   public abstract class DefaultBindings {
     public const string Url = "";
 
+    [DllImport( "user32.dll" )]
+    public static extern bool UpdateWindow ( IntPtr hWnd );
     public string AppName { get; set; }
     public virtual object GetAppDetails () => this.AppName;
 
     public List<string> strings = new List<string>() { "1" };
 
     public IWebBrowser Browser { get; set; }
+
+    public System.Windows.Forms.Control UIThread { get; set; }
+    public SynchronizationContext Context { get; set; }
+
+    public delegate void GoDelegate ();
 
     public virtual void NotifyUI ( string eventName, dynamic eventInfo = null ) {
       string script = string.Format( "window.EventBus.$emit('{0}',{1})", eventName, JsonConvert.SerializeObject( eventInfo ) );

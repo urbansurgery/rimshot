@@ -1,16 +1,38 @@
 ﻿using Autodesk.Navisworks.Api;
+using Autodesk.Navisworks.Api.ComApi;
+using Autodesk.Navisworks.Api.Interop.ComApi;
 using Objects.Geometry;
 using Rimshot.Geometry;
 using Speckle.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Security;
+
 using Props = Rimshot.Conversions.Properties;
 
+namespace Rimshot {
+  class PathTree {
+
+    private InwOaPath path { get; set; }
+    private List<PathTree> children { get; set; }
+    PathTree () {
+
+    }
+
+
+  }
+}
+
 namespace Rimshot.Conversions {
+
+
+
+
   internal class ToSpeckle {
+
+
+
+
 
     static public Box BoxToSpeckle ( BoundingBox3D boundingBox3D ) {
       Box boundingBox = new Box();
@@ -26,7 +48,60 @@ namespace Rimshot.Conversions {
 
       return boundingBox;
     }
-    [HandleProcessCorruptedStateExceptions, SecurityCritical]
+
+
+
+    static public Dictionary<NamedConstant, InwGUIAttribute2> GetPropertyCategories ( InwOaPath itemPath ) {
+      //COM state object
+      InwOpState10 cdoc = ComApiBridge.State;
+
+      // Get Items PropertyCategoryCollection object
+      InwGUIPropertyNode2 propertyNode = ( InwGUIPropertyNode2 )cdoc.GetGUIPropertyNode( itemPath, true );
+
+      // Get PropertyCategoryCollection data
+      var allPropertyCategories = propertyNode.GUIAttributes().Cast<InwGUIAttribute2>();
+
+      // loop propertycategory
+
+      Dictionary<NamedConstant, InwGUIAttribute2> namedPropertyCategories = new Dictionary<NamedConstant, InwGUIAttribute2>();
+
+      foreach ( InwGUIAttribute2 propertyCategory in allPropertyCategories ) {
+        try {
+          NamedConstant categoryName = new NamedConstant( propertyCategory.ClassName, propertyCategory.ClassUserName );
+
+          if ( namedPropertyCategories.ContainsKey( categoryName ) ) {
+            continue;
+          }
+          namedPropertyCategories.Add( categoryName, propertyCategory );
+        } catch ( Exception e ) {
+          Console.WriteLine( $"COM Property Categories: {e.Message}" );
+        }
+      }
+
+      GC.KeepAlive( propertyNode );
+      GC.KeepAlive( namedPropertyCategories );
+
+      return namedPropertyCategories;
+    }
+
+    public static Dictionary<NamedConstant, InwGUIAttribute2> GetPropertyCategories ( ModelItem item ) => GetPropertyCategories( ComApiBridge.ToInwOaPath( item ) );
+
+
+    public static Dictionary<NamedConstant, InwOaProperty> GetProperties ( InwOaPropertyColl categoryProperties ) {
+
+      Dictionary<NamedConstant, InwOaProperty> namedProperties = new Dictionary<NamedConstant, InwOaProperty>();
+
+      foreach ( InwOaProperty property in categoryProperties ) {
+        NamedConstant propertyName = new NamedConstant( property.name, property.UserName );
+        if ( namedProperties.ContainsKey( propertyName ) ) {
+          continue;
+        }
+        namedProperties.Add( propertyName, property );
+      }
+
+      return namedProperties;
+    }
+
     public static Base BuildBaseObjectTree ( ModelItem element,
                                             NavisGeometry geometry,
                                             List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions,
@@ -34,93 +109,86 @@ namespace Rimshot.Conversions {
 
       Base elementBase = new Base();
       Base propertiesBase = new Base();
-      List<PropertyCategory> propertyCategories;
-      try {
-        // GUI visible properties varies by a Global Options setting.
-        propertyCategories = element.GetUserFilteredPropertyCategories().ToList();
-      } catch ( Exception e ) {
-        Console.WriteLine( e.Message );
-        propertyCategories = new List<PropertyCategory>();
-      }
+
+      Dictionary<NamedConstant, InwGUIAttribute2> propertyCategories = GetPropertyCategories( element );
+
       foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in QuickPropertyDefinitions ) {
-        // One of the Points of AccessViolationException.
-        PropertyCategory foundCategory;
-        try {
-          foundCategory = propertyCategories.Where( p => p.CombinedName == quickPropertyDef.Item1 ).FirstOrDefault();
-        } catch ( Exception e ) {
-          Console.WriteLine( e.Message );
-          foundCategory = null;
-        }
+        KeyValuePair<NamedConstant, InwGUIAttribute2> foundCategory;
+
+        foundCategory = propertyCategories.FirstOrDefault( p => p.Key.Equals( quickPropertyDef.Item1 ) );
 
         Base quickPropertiesCategoryBase;
 
-        if ( foundCategory != null ) {
-          List<DataProperty> categoryProperties;
+        if ( foundCategory.Key != null ) {
+          Dictionary<NamedConstant, InwOaProperty> categoryProperties;
+          InwOaPropertyColl foundCategoryProperties;
           try {
-            categoryProperties = foundCategory.Properties.ToList();
+            if ( foundCategory.Value != null ) {
+              foundCategoryProperties = foundCategory.Value.Properties();
+              categoryProperties = GetProperties( foundCategoryProperties );
+            } else {
+              categoryProperties = null;
+            }
           } catch ( Exception e ) {
             Console.WriteLine( e.Message );
             categoryProperties = null;
           }
 
-          if ( categoryProperties != null ) {
-            DataProperty foundProperty = categoryProperties.Where( p => p.CombinedName == quickPropertyDef.Item2 ).FirstOrDefault();
+          if ( categoryProperties != null && categoryProperties.Keys.Count > 0 ) {
+            KeyValuePair<NamedConstant, InwOaProperty> foundProperty = categoryProperties.FirstOrDefault( p => p.Value.Equals( quickPropertyDef.Item2 ) );
 
-            string foundCategoryName = Props.SanitizePropertyName( foundCategory.DisplayName );
-            Base qb = ( Base )QuickProperties[ foundCategoryName ];
-            bool v = QuickProperties[ foundCategoryName ] == null;
-
-            quickPropertiesCategoryBase = v ? new Base() : qb;
-
-            if ( foundProperty != null ) {
-
-              Props.BuildPropertyCategory( foundCategory, foundProperty, ref quickPropertiesCategoryBase );
+            if ( foundProperty.Key != null ) {
+              string foundCategoryName = Props.SanitizePropertyName( foundCategory.Key.DisplayName );
+              Base qb = ( Base )QuickProperties[ foundCategoryName ];
+              bool v = QuickProperties[ foundCategoryName ] == null;
+              quickPropertiesCategoryBase = v ? new Base() : qb;
+              Props.BuildPropertyCategory( foundCategory.Value, foundProperty.Value, ref quickPropertiesCategoryBase );
+              QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
             }
-
-            QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
           }
         }
       }
 
-      foreach ( PropertyCategory propertyCategory in propertyCategories ) {
-        List<DataProperty> properties;
+      GC.KeepAlive( propertyCategories );
+      GC.KeepAlive( QuickPropertyDefinitions );
 
-        try {
-          // One of the Points of AccessViolationException.
-          properties = new List<DataProperty>();
-          properties.AddRange( propertyCategory.Properties.ToList() );
-        } catch ( Exception e ) {
-          Console.WriteLine( e.Message );
-          properties = null;
-        }
+      //foreach ( InwGUIAttribute2 propertyCategory in propertyCategories.Values ) {
+      //  List<InwOaProperty> properties;
 
-        if ( properties != null ) {
+      //  properties = new List<InwOaProperty>();
 
-          Base propertyCategoryBase = new Base();
-          properties.ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
+      //  foreach ( InwOaProperty property in propertyCategory.Properties() ) {
+      //    properties.Add( property );
+      //  }
 
-          if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.DisplayName != null ) {
-            if ( propertiesBase != null ) {
+      //  if ( properties.Count > 0 ) {
 
-              string propertyCategoryDisplayName = Props.SanitizePropertyName( propertyCategory.DisplayName );
+      //    Base propertyCategoryBase = new Base();
+      //    properties.ForEach( property => Props.BuildPropertyCategory( propertyCategory, property, ref propertyCategoryBase ) );
 
-              if ( propertyCategory.DisplayName == "Geometry" ) {
-                continue;
-              }
+      //    if ( propertyCategoryBase.GetDynamicMembers().Count() > 0 && propertyCategory.ClassUserName != null ) {
+      //      if ( propertiesBase != null ) {
 
-              if ( propertyCategory.DisplayName == "Item" ) {
-                foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
-                  elementBase[ property ] = propertyCategoryBase[ property ];
-                }
-              } else {
-                propertiesBase[ propertyCategoryDisplayName ] = propertyCategoryBase;
-              }
-            }
-          }
-          elementBase[ "Properties" ] = propertiesBase;
-        }
-        elementBase[ "QuickProperties" ] = QuickProperties;
-      }
+      //        string propertyCategoryDisplayName = Props.SanitizePropertyName( propertyCategory.ClassUserName );
+
+      //        if ( propertyCategory.ClassUserName == "Geometry" ) {
+      //          continue;
+      //        }
+
+      //        if ( propertyCategory.ClassUserName == "Item" ) {
+      //          foreach ( string property in propertyCategoryBase.GetDynamicMembers() ) {
+      //            elementBase[ property ] = propertyCategoryBase[ property ];
+      //          }
+      //        } else {
+      //          propertiesBase[ propertyCategoryDisplayName ] = propertyCategoryBase;
+      //        }
+      //      }
+      //    }
+      //  }
+      //}
+
+      elementBase[ "Properties" ] = propertiesBase;
+      elementBase[ "QuickProperties" ] = QuickProperties;
 
       if ( element == geometry.ModelItem ) {
         // Establish the node as the geometry node and copy through the existing conversion.

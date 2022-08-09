@@ -1,5 +1,7 @@
 ﻿using Autodesk.Navisworks.Api;
 using Autodesk.Navisworks.Api.DocumentParts;
+using Autodesk.Navisworks.Api.Interop.ComApi;
+using Rimshot.ArrayExtensions;
 using Rimshot.Conversions;
 using Rimshot.Geometry;
 using Rimshot.SpeckleApi;
@@ -16,8 +18,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Application = Autodesk.Navisworks.Api.Application;
 using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using Navis = Autodesk.Navisworks.Api.Application;
@@ -26,7 +30,6 @@ using Props = Rimshot.Conversions.Properties;
 
 namespace Rimshot.Bindings {
   public abstract class RimshotAppBindings : DefaultBindings {
-
     public RimshotAppBindings () => AppName = "Rimshot";
 
 #if DEBUGUI
@@ -58,7 +61,74 @@ namespace Rimshot.Bindings {
       return camera;
     }
 
+
+
     public Document ActiveDocument { get; set; }
+
+    public void GetElements () {
+
+      this.ActiveDocument = NavisworksApp.ActiveDocument;
+
+      ConcurrentStack<ModelItem> itemCollection = new ConcurrentStack<ModelItem>();
+      ModelItemCollection selectedItems = this.ActiveDocument.CurrentSelection.SelectedItems;
+
+      ForegroundWorker geometryWorker = new ForegroundWorker();
+
+      //List<Task> geometryTasks = new List<Task>();
+      foreach ( ModelItem modelItem in selectedItems ) {
+        //Task task = Task.Run( () => {
+        //this.Context.Send( o => {
+        IEnumerable<ModelItem> selectedItemsChildren = modelItem.DescendantsAndSelf.Cast<ModelItem>().Where( mi => mi.HasGeometry && !mi.Ancestors.Any( a => a.IsHidden ) );
+        foreach ( ModelItem m in selectedItemsChildren ) {
+          itemCollection.Push( m );
+        }
+        //}, null );
+        //} );
+        //geometryTasks.Add( task );
+      }
+      //Task.WhenAll( geometryTasks ).Wait();
+
+      ConcurrentDictionary<string, InwOaPath> paths = new ConcurrentDictionary<string, InwOaPath>();
+
+      //List<Task> firstObjectTasks = new List<Task>();
+
+      foreach ( ModelItem modelItem in itemCollection ) {
+        //Task task = Task.Run( () => {
+        //this.Context.Send( o => {
+        ModelItem firstObject = modelItem.FindFirstObjectAncestor();
+        InwOaPath path = ComBridge.ToInwOaPath( firstObject );
+        object arrayData = path.ArrayData;
+        int[] pathAsArray = ( ( Array )arrayData ).ToArray<int>();
+        string pathAsString = string.Join( ".", pathAsArray );
+        bool v = paths.TryAdd( pathAsString, path );
+        //}, null );
+        //} );
+        //firstObjectTasks.Add( task );
+      }
+
+      //Task.WhenAll( firstObjectTasks ).Wait();
+
+      List<ModelItem> modelItemsHydrated = paths.Select( path => ComBridge.ToModelItem( path.Value ) ).ToList();
+
+      SelectionSet s = new SelectionSet();
+      s.CopyFrom( modelItemsHydrated );
+
+      SavedItem si = s;
+      si.DisplayName = "Rimshot";
+      si.MakeDisplayNameUnique( ActiveDocument.SelectionSets.RootItem );
+
+      this.Context.Send( o => {
+        if ( this.ActiveDocument == null ) {
+          return;
+        }
+        ActiveDocument.CurrentSelection.Clear();
+        ActiveDocument.CurrentSelection.AddRange( modelItemsHydrated );
+        ActiveDocument.SelectionSets.AddCopy( si );
+      }, null );
+    }
+
+    public IEnumerable<ModelItem> ItemsFromRoot ( Model model ) => model.RootItem.Descendants.Where( modelItem => modelItem.HasGeometry && modelItem.IsHidden );
+
 
     /// <summary>
     /// Adds an hierarchical object based on the current selection and commits to the selected issue Branch. If no branch exists, one is created.
@@ -66,6 +136,10 @@ namespace Rimshot.Bindings {
     /// <param name="payload"></param>
     /// <param name="commitMessage">Allows for the calling UI to override this and include a custom commit message.</param>
     public async void CommitSelection ( object payload, string commitMessage = "Rimshot commit." ) {
+
+      GetElements();
+
+      return;
 
       Geometry.Geometry geometry = new Geometry.Geometry();
 
@@ -255,7 +329,7 @@ namespace Rimshot.Bindings {
       }
     }
 
-    private void SendIssueView () {
+    async private void SendIssueView () {
       MemoryStream stream;
       byte[] imageBytes;
       Guid id = Guid.NewGuid();
@@ -307,6 +381,9 @@ namespace Rimshot.Bindings {
 
         ImageViewpoint viewpoint = new ImageViewpoint( oNewViewPt1 );
 
+        oBitmap.Dispose();
+        tBitmap.Dispose();
+
       } catch ( Exception err ) {
         _ = MessageBox.Show( err.Message );
       }
@@ -314,6 +391,70 @@ namespace Rimshot.Bindings {
 
       SetImage( imageString );
       NotifyUI( "new-image", imageString );
+
+      try {
+
+        int threadId = Thread.CurrentThread.ManagedThreadId;
+        Console.WriteLine( $"Set View thread {threadId}" );
+
+        //if ( this.UIThread.InvokeRequired ) {
+        //  this.UIThread.Invoke( new GoDelegate( AddSelectionSet ) );
+        //} else {
+        //  AddSelectionSet();
+        //}
+
+        List<Task> Tasks = new List<Task>();
+        ConcurrentStack<bool> stack = new ConcurrentStack<bool>();
+        for ( int i = 0; i < 100; i++ ) {
+          Tasks.Add( Task.Run( () => {
+            ForegroundWorker fw = new ForegroundWorker();
+
+            _ = fw.Send( o => {
+              stack.Push( true );
+              DocumentSelectionSets dss = Application.ActiveDocument.SelectionSets;
+              ModelItemCollection m = new ModelItemCollection();
+              SelectionSet s = new SelectionSet( m ) {
+                DisplayName = $"Set No: {stack.Count}"
+              };
+
+              dss.AddCopy( s );
+
+              fw.Response = $"Set: {stack.Count}";
+            }, this.Context );
+
+            _ = fw.Send( o => {
+              IntPtr hWnd = Autodesk.Navisworks.Api.Application.Gui.MainWindow.Handle;
+              UpdateWindow( hWnd );
+            }, this.Context );
+
+            Console.WriteLine( $"{fw.Response}" );
+          } ) );
+        }
+
+        await Task.WhenAll( Tasks );
+        Console.WriteLine( "All Gone." );
+
+        //Navis.ActiveDocument.SelectionSets.AddCopy( s );
+      } catch ( Exception e ) {
+        Console.WriteLine( e.Message );
+      }
+    }
+
+
+  }
+
+  class ForegroundWorker {
+    internal object Response { get; set; }
+
+    internal object Send ( SendOrPostCallback function, SynchronizationContext context ) {
+      context.Send( function, Response );
+
+      return this.Response;
+    }
+    internal object Post ( SendOrPostCallback function, SynchronizationContext context ) {
+      context.Post( function, Response );
+
+      return this.Response;
     }
   }
 }
