@@ -14,13 +14,15 @@ export default {
       once: true,
     });
 
-    // Prevent multiple refreshes
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (this.refreshing) return;
-      this.refreshing = true;
-      // Here the actual reload of the page occurs
-      window.location.reload();
-    });
+    if (typeof navigator.serviceWorker !== 'undefined') {
+      // Prevent multiple refreshes
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (this.refreshing) return;
+        this.refreshing = true;
+        // Here the actual reload of the page occurs
+        window.location.reload();
+      });
+    }
   },
 
   methods: {
