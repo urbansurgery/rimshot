@@ -2,7 +2,7 @@
 
 namespace Rimshot.Conversions {
   internal class Units {
-    static public double GetUnits () {
+    public static double GetUnits () {
       string units = Autodesk.Navisworks.Api.Application.ActiveDocument.Units.ToString();
       double factor;
       switch ( units ) {

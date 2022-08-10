@@ -4,13 +4,14 @@ using Autodesk.Navisworks.Api.Interop.ComApi;
 using Speckle.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 using Props = Rimshot.Conversions.Properties;
 
 namespace Rimshot.Conversions {
   internal class Properties {
-    static public string SanitizePropertyName ( string name ) {
+    public static string SanitizePropertyName ( string name ) {
       if ( name == "Item" ) {
         return "$Item";
       }
@@ -19,7 +20,7 @@ namespace Rimshot.Conversions {
       return Regex.Replace( name, @"[\.\/]", "_" );
     }
 
-    static public void BuildPropertyCategory ( InwGUIAttribute2 propertyCategory, InwOaProperty property, ref Base propertyCategoryBase ) {
+    public static void BuildPropertyCategory ( InwGUIAttribute2 propertyCategory, InwOaProperty property, ref Base propertyCategoryBase ) {
       string categoryName;
       string propertyName;
       try {
@@ -66,20 +67,18 @@ namespace Rimshot.Conversions {
       //    break;
       //}
 
-      if ( propertyValue != null && propertyCategoryBase != null ) {
+      if ( propertyCategoryBase != null ) {
         object keyPropValue = propertyCategoryBase[ propertyName ];
 
         if ( keyPropValue == null ) {
           propertyCategoryBase[ propertyName ] = propertyValue;
-        } else if ( keyPropValue is List<dynamic> ) {
-          List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
+        } else if ( keyPropValue is List<dynamic> list ) {
+          if ( !list.Contains( propertyValue ) ) {
 
-          if ( !arrayPropValue.Contains( propertyValue ) ) {
-
-            arrayPropValue.Add( propertyValue );
+            list.Add( propertyValue );
           }
 
-          propertyCategoryBase[ propertyName ] = arrayPropValue;
+          propertyCategoryBase[ propertyName ] = list;
         } else {
           dynamic existingValue = keyPropValue;
 
@@ -95,7 +94,7 @@ namespace Rimshot.Conversions {
       }
     }
 
-    static public void BuildPropertyCategory ( PropertyCategory propertyCategory, DataProperty property, ref Base propertyCategoryBase ) {
+    public static void BuildPropertyCategory ( PropertyCategory propertyCategory, DataProperty property, ref Base propertyCategoryBase ) {
       string categoryName;
       string propertyName;
       try {
@@ -126,13 +125,11 @@ namespace Rimshot.Conversions {
         case VariantDataType.DoubleArea: propertyValue = property.Value.ToDoubleArea(); break;
         case VariantDataType.DoubleLength: propertyValue = property.Value.ToDoubleLength(); break;
         case VariantDataType.DoubleVolume: propertyValue = property.Value.ToDoubleVolume(); break;
-        case VariantDataType.DateTime: propertyValue = property.Value.ToDateTime().ToString(); break;
+        case VariantDataType.DateTime: propertyValue = property.Value.ToDateTime().ToString( CultureInfo.InvariantCulture ); break;
         case VariantDataType.NamedConstant: propertyValue = property.Value.ToNamedConstant().DisplayName; break;
         case VariantDataType.Point3D: propertyValue = property.Value.ToPoint3D(); break;
         case VariantDataType.None: break;
         case VariantDataType.Point2D:
-          break;
-        default:
           break;
       }
 
@@ -141,15 +138,13 @@ namespace Rimshot.Conversions {
 
         if ( keyPropValue == null ) {
           propertyCategoryBase[ propertyName ] = propertyValue;
-        } else if ( keyPropValue is List<dynamic> ) {
-          List<dynamic> arrayPropValue = ( List<dynamic> )keyPropValue;
+        } else if ( keyPropValue is List<dynamic> list ) {
+          if ( !list.Contains( propertyValue ) ) {
 
-          if ( !arrayPropValue.Contains( propertyValue ) ) {
-
-            arrayPropValue.Add( propertyValue );
+            list.Add( propertyValue );
           }
 
-          propertyCategoryBase[ propertyName ] = arrayPropValue;
+          propertyCategoryBase[ propertyName ] = list;
         } else {
           dynamic existingValue = keyPropValue;
 
@@ -166,20 +161,20 @@ namespace Rimshot.Conversions {
     }
 
     public static List<Tuple<NamedConstant, NamedConstant>> LoadQuickProperties () {
-      List<Tuple<NamedConstant, NamedConstant>> quickProperties_CategoryPropertyPairs = new List<Tuple<NamedConstant, NamedConstant>>();
+      List<Tuple<NamedConstant, NamedConstant>> quickPropertiesCategoryPropertyPairs = new List<Tuple<NamedConstant, NamedConstant>>();
       using ( LcUOptionLock optionLock = new LcUOptionLock() ) {
         LcUOptionSet set = LcUOption.GetSet( "interface.smart_tags.definitions", optionLock );
         int numOptions = set.GetNumOptions();
         if ( numOptions > 0 ) {
           for ( int index = 0; index < numOptions; ++index ) {
-            LcUOptionSet lcUoptionSet = set.GetValue( index, null );
-            NamedConstant cat = lcUoptionSet.GetName( "category" ).GetPtr();
-            NamedConstant prop = lcUoptionSet.GetName( "property" ).GetPtr();
-            quickProperties_CategoryPropertyPairs.Add( Tuple.Create( cat, prop ) );
+            LcUOptionSet lcUOptionSet = set.GetValue( index, null );
+            NamedConstant cat = lcUOptionSet.GetName( "category" ).GetPtr();
+            NamedConstant prop = lcUOptionSet.GetName( "property" ).GetPtr();
+            quickPropertiesCategoryPropertyPairs.Add( Tuple.Create( cat, prop ) );
           }
         }
       }
-      return quickProperties_CategoryPropertyPairs;
+      return quickPropertiesCategoryPropertyPairs;
     }
   }
 }

@@ -9,7 +9,6 @@
     <Import_RootNamespace>Rimshot</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Collections\ObservableCollections.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Conversions\Colors.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Conversions\Materials.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Conversions\ToSpeckle.cs" />
@@ -29,7 +28,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Selections.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Plugins\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Types.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utilities\IfcGuid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\TaskProgress.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Views\Views.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Plugins\RimshotPlugin.cs" />
@@ -94,7 +92,6 @@
     <Content Include="$(MSBuildThisFileDirectory)Images\rimshot32.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)Utilities\Ionic.Zip.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Ribbon\Ribbon.name">
@@ -119,5 +116,8 @@
       <SubType>Designer</SubType>
       <Generator>XamlIntelliSenseFileGenerator</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Collections\" />
   </ItemGroup>
 </Project>

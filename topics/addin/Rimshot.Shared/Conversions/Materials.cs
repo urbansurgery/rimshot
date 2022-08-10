@@ -2,6 +2,7 @@
 using Autodesk.Navisworks.Api.Interop.ComApi;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Security;
 using Color = System.Drawing.Color;
@@ -9,16 +10,16 @@ using Color = System.Drawing.Color;
 using ComApiBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 
 namespace Rimshot.Conversions {
-  class Materials {
+  internal class Materials {
 
     [HandleProcessCorruptedStateExceptions, SecurityCritical]
-    static public Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
+    public static Objects.Other.RenderMaterial TranslateMaterial ( ModelItem geom ) {
 
-      var Settings = new { Mode = "original" };
+      var settings = new { Mode = "original" };
 
       Color renderColor;
 
-      switch ( Settings.Mode ) {
+      switch ( settings.Mode ) {
         case "original":
           renderColor = Colors.NavisColorToColor( geom.Geometry.OriginalColor );
           break;
@@ -38,19 +39,19 @@ namespace Rimshot.Conversions {
       Color black = Color.FromArgb( Convert.ToInt32( 0 ), Convert.ToInt32( 0 ), Convert.ToInt32( 0 ) );
 
       //COM state object
-      InwOpState10 cdoc = ComApiBridge.State;
+      InwOpState10 state = ComApiBridge.State;
 
 
       // convert ModelItem to COM Path
       InwOaPath itemPath = ComApiBridge.ToInwOaPath( geom );
 
       // Get Items PropertyCategoryCollection object
-      InwGUIPropertyNode2 propertyNode = ( InwGUIPropertyNode2 )cdoc.GetGUIPropertyNode( itemPath, true );
+      InwGUIPropertyNode2 propertyNode = ( InwGUIPropertyNode2 )state.GetGUIPropertyNode( itemPath, true );
 
       // Get PropertyCategoryCollection data
       InwGUIAttributesColl allPropertyCategories = propertyNode.GUIAttributes();
 
-      // loop propertycategory
+      // loop property category
 
       Dictionary<string, InwOaPropertyColl> namedPropertyCategories = new Dictionary<string, InwOaPropertyColl>();
 
@@ -77,10 +78,8 @@ namespace Rimshot.Conversions {
         }
 
         if ( properties != null ) {
-          foreach ( InwOaProperty prop in properties ) {
-            if ( prop.name.Equals( "Name" ) && prop.value != null && prop.value.ToString() != "" ) {
-              materialName = prop.value.ToString();
-            }
+          foreach ( InwOaProperty prop in properties.Cast<InwOaProperty>().Where( prop => prop.name.Equals( "Name" ) && prop.value != null && prop.value.ToString() != "" ) ) {
+            materialName = prop.value.ToString();
           }
         }
       } catch ( Exception e ) {

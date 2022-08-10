@@ -1,5 +1,4 @@
 ﻿using Autodesk.Navisworks.Api.Plugins;
-using Autodesk.Windows;
 using System.Text;
 using System.Windows.Forms;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
@@ -57,10 +56,6 @@ namespace Rimshot {
 
             break;
           }
-
-        default: {
-            break;
-          }
       }
 
 
@@ -70,7 +65,6 @@ namespace Rimshot {
 
     }
 
-    public RibbonHandler () { }
     public bool LoadPlugin ( string plugin, bool notAutomatedCheck = true, string command = "" ) {
       if ( notAutomatedCheck && NavisworksApp.IsAutomated ) {
         return false;
@@ -86,9 +80,9 @@ namespace Rimshot {
         return false;
       }
 
-      Autodesk.Navisworks.Api.Plugins.Plugin loadedPlugin = pluginRecord.LoadedPlugin ?? pluginRecord.LoadPlugin();
+      Plugin loadedPlugin = pluginRecord.LoadedPlugin ?? pluginRecord.LoadPlugin();
 
-      // Activate the Plugin's pane if it is of the right type
+      // Activate the Plugin pane if it is of the right type
       if ( pluginRecord.IsLoaded && pluginRecord is DockPanePluginRecord && pluginRecord.IsEnabled ) {
         DockPanePlugin dockPanePlugin = ( DockPanePlugin )loadedPlugin;
         dockPanePlugin.ActivatePane();
@@ -109,25 +103,23 @@ namespace Rimshot {
     }
 
     public override int ExecuteCommand ( string commandId, params string[] parameters ) {
-      string buildVersion = "2022";
-
 #if IS2018
-      buildVersion = "2018";
+      string buildVersion = "2018";
 #endif
 #if IS2019
-      buildVersion = "2019";
+      string buildVersion = "2019";
 #endif
 #if IS2020
-      buildVersion = "2020";
+      string buildVersion = "2020";
 #endif
 #if IS2021
-      buildVersion = "2021";
+      string buildVersion = "2021";
 #endif
 #if IS2022
-      buildVersion = "2022";
+      string buildVersion = "2022";
 #endif
 #if IS2023
-      buildVersion = "2023";
+      string buildVersion = "2023";
 #endif
 
       // Version

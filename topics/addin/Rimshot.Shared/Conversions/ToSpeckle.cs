@@ -13,8 +13,8 @@ using Props = Rimshot.Conversions.Properties;
 namespace Rimshot {
   class PathTree {
 
-    private InwOaPath path { get; set; }
-    private List<PathTree> children { get; set; }
+    private InwOaPath Path { get; set; }
+    private List<PathTree> Children { get; set; }
     PathTree () {
 
     }
@@ -34,10 +34,10 @@ namespace Rimshot.Conversions {
 
 
 
-    static public Box BoxToSpeckle ( BoundingBox3D boundingBox3D ) {
+    public static Box BoxToSpeckle ( BoundingBox3D boundingBox3D ) {
       Box boundingBox = new Box();
 
-      double scale = 0.001; // TODO: Proper units support.
+      const double scale = 0.001; // TODO: Proper units support.
 
       Point3D min = boundingBox3D.Min;
       Point3D max = boundingBox3D.Max;
@@ -51,17 +51,17 @@ namespace Rimshot.Conversions {
 
 
 
-    static public Dictionary<NamedConstant, InwGUIAttribute2> GetPropertyCategories ( InwOaPath itemPath ) {
+    public static Dictionary<NamedConstant, InwGUIAttribute2> GetPropertyCategories ( InwOaPath itemPath ) {
       //COM state object
-      InwOpState10 cdoc = ComApiBridge.State;
+      InwOpState10 state = ComApiBridge.State;
 
       // Get Items PropertyCategoryCollection object
-      InwGUIPropertyNode2 propertyNode = ( InwGUIPropertyNode2 )cdoc.GetGUIPropertyNode( itemPath, true );
+      InwGUIPropertyNode2 propertyNode = ( InwGUIPropertyNode2 )state.GetGUIPropertyNode( itemPath, true );
 
       // Get PropertyCategoryCollection data
       var allPropertyCategories = propertyNode.GUIAttributes().Cast<InwGUIAttribute2>();
 
-      // loop propertycategory
+      // loop property category
 
       Dictionary<NamedConstant, InwGUIAttribute2> namedPropertyCategories = new Dictionary<NamedConstant, InwGUIAttribute2>();
 
@@ -104,27 +104,22 @@ namespace Rimshot.Conversions {
 
     public static Base BuildBaseObjectTree ( ModelItem element,
                                             NavisGeometry geometry,
-                                            List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions,
-                                            ref Base QuickProperties ) {
+                                            List<Tuple<NamedConstant, NamedConstant>> quickPropertyDefinitions,
+                                            ref Base quickProperties ) {
 
       Base elementBase = new Base();
       Base propertiesBase = new Base();
 
       Dictionary<NamedConstant, InwGUIAttribute2> propertyCategories = GetPropertyCategories( element );
 
-      foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in QuickPropertyDefinitions ) {
-        KeyValuePair<NamedConstant, InwGUIAttribute2> foundCategory;
-
-        foundCategory = propertyCategories.FirstOrDefault( p => p.Key.Equals( quickPropertyDef.Item1 ) );
-
-        Base quickPropertiesCategoryBase;
+      foreach ( Tuple<NamedConstant, NamedConstant> quickPropertyDef in quickPropertyDefinitions ) {
+        KeyValuePair<NamedConstant, InwGUIAttribute2> foundCategory = propertyCategories.FirstOrDefault( p => p.Key.Equals( quickPropertyDef.Item1 ) );
 
         if ( foundCategory.Key != null ) {
           Dictionary<NamedConstant, InwOaProperty> categoryProperties;
-          InwOaPropertyColl foundCategoryProperties;
           try {
             if ( foundCategory.Value != null ) {
-              foundCategoryProperties = foundCategory.Value.Properties();
+              InwOaPropertyColl foundCategoryProperties = foundCategory.Value.Properties();
               categoryProperties = GetProperties( foundCategoryProperties );
             } else {
               categoryProperties = null;
@@ -139,18 +134,18 @@ namespace Rimshot.Conversions {
 
             if ( foundProperty.Key != null ) {
               string foundCategoryName = Props.SanitizePropertyName( foundCategory.Key.DisplayName );
-              Base qb = ( Base )QuickProperties[ foundCategoryName ];
-              bool v = QuickProperties[ foundCategoryName ] == null;
-              quickPropertiesCategoryBase = v ? new Base() : qb;
+              Base qb = ( Base )quickProperties[ foundCategoryName ];
+              bool v = quickProperties[ foundCategoryName ] == null;
+              Base quickPropertiesCategoryBase = v ? new Base() : qb;
               Props.BuildPropertyCategory( foundCategory.Value, foundProperty.Value, ref quickPropertiesCategoryBase );
-              QuickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
+              quickProperties[ foundCategoryName ] = quickPropertiesCategoryBase;
             }
           }
         }
       }
 
       GC.KeepAlive( propertyCategories );
-      GC.KeepAlive( QuickPropertyDefinitions );
+      GC.KeepAlive( quickPropertyDefinitions );
 
       //foreach ( InwGUIAttribute2 propertyCategory in propertyCategories.Values ) {
       //  List<InwOaProperty> properties;
@@ -188,7 +183,7 @@ namespace Rimshot.Conversions {
       //}
 
       elementBase[ "Properties" ] = propertiesBase;
-      elementBase[ "QuickProperties" ] = QuickProperties;
+      elementBase[ "QuickProperties" ] = quickProperties;
 
       if ( element == geometry.ModelItem ) {
         // Establish the node as the geometry node and copy through the existing conversion.
@@ -198,14 +193,14 @@ namespace Rimshot.Conversions {
       } else {
         // Process the descendants.
         List<Base> children = new List<Base>();
-        if ( element.Children.Count() > 0 ) {
+        if ( element.Children.Any() ) {
           for ( int d = 0; d < element.Children.Count(); d++ ) {
             ModelItem child = element.Children.ElementAt( d );
-            Base bbot = BuildBaseObjectTree( child, geometry, QuickPropertyDefinitions, ref QuickProperties );
+            Base buildBaseObjectTree = BuildBaseObjectTree( child, geometry, quickPropertyDefinitions, ref quickProperties );
 
-            if ( bbot != null ) {
+            if ( buildBaseObjectTree != null ) {
               if ( child.Geometry == null || child == geometry.ModelItem ) {
-                children.Add( bbot );
+                children.Add( buildBaseObjectTree );
               }
             }
           }
@@ -249,11 +244,9 @@ namespace Rimshot.Conversions {
         elementBase[ "Creator" ] = element.Model.Creator;
       }
 
-      if ( element.InstanceGuid != null ) {
-        if ( element.InstanceGuid.ToByteArray().Select( x => ( int )x ).Sum() > 0 ) {
-          elementBase[ "InstanceGuid" ] = element.InstanceGuid;
-          elementBase.applicationId = element.InstanceGuid.ToString();
-        }
+      if ( element.InstanceGuid.ToByteArray().Select( x => ( int )x ).Sum() > 0 ) {
+        elementBase[ "InstanceGuid" ] = element.InstanceGuid;
+        elementBase.applicationId = element.InstanceGuid.ToString();
       }
 
       if ( element.ClassDisplayName != null ) {

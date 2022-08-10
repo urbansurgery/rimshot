@@ -5,7 +5,6 @@ using Rimshot.ArrayExtensions;
 using Rimshot.Conversions;
 using Rimshot.Geometry;
 using Rimshot.SpeckleApi;
-using Rimshot.Views;
 using Speckle.Core.Api;
 using Speckle.Core.Models;
 using Speckle.Core.Transports;
@@ -22,7 +21,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Application = Autodesk.Navisworks.Api.Application;
-using ComApi = Autodesk.Navisworks.Api.Interop.ComApi;
 using ComBridge = Autodesk.Navisworks.Api.ComApi.ComApiBridge;
 using Navis = Autodesk.Navisworks.Api.Application;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
@@ -30,29 +28,29 @@ using Props = Rimshot.Conversions.Properties;
 
 namespace Rimshot.Bindings {
   public abstract class RimshotAppBindings : DefaultBindings {
-    public RimshotAppBindings () => AppName = "Rimshot";
+    protected RimshotAppBindings () => this.AppName = "Rimshot";
 
 #if DEBUGUI
-    const string rimshotUrl = "http://192.168.86.29:8080/issues";
+    private const string RimshotUrl = "http://192.168.86.29:8080/issues";
 #else
     const string rimshotUrl = "https://rimshot.app/issues";
 #endif
-    public new const string Url = rimshotUrl;
+    public new const string Url = RimshotUrl;
     private const int Modulo = 5;
     private string _tempFolder = "";
 
     public RimshotPane Window { get; set; }
-    private string image;
+    private string _image;
 
-    private readonly List<Tuple<NamedConstant, NamedConstant>> QuickPropertyDefinitions = new List<Tuple<NamedConstant, NamedConstant>>();
-    private Base QuickProperties;
-    private readonly SpeckleServer SpeckleServer = new SpeckleServer();
-
-    // base64 encoding of the image
-    public virtual string GetImage () => this.image;
+    private readonly List<Tuple<NamedConstant, NamedConstant>> _quickPropertyDefinitions = new List<Tuple<NamedConstant, NamedConstant>>();
+    private Base _quickProperties;
+    private readonly SpeckleServer _speckleServer = new SpeckleServer();
 
     // base64 encoding of the image
-    public virtual void SetImage ( string value ) => this.image = value;
+    public virtual string GetImage () => this._image;
+
+    // base64 encoding of the image
+    public virtual void SetImage ( string value ) => this._image = value;
 
     public virtual void AddImage () => SendIssueView();
 
@@ -78,7 +76,7 @@ namespace Rimshot.Bindings {
       foreach ( ModelItem modelItem in selectedItems ) {
         //Task task = Task.Run( () => {
         //this.Context.Send( o => {
-        IEnumerable<ModelItem> selectedItemsChildren = modelItem.DescendantsAndSelf.Cast<ModelItem>().Where( mi => mi.HasGeometry && !mi.Ancestors.Any( a => a.IsHidden ) );
+        IEnumerable<ModelItem> selectedItemsChildren = modelItem.DescendantsAndSelf.Where( mi => mi.HasGeometry && !mi.Ancestors.Any( a => a.IsHidden ) );
         foreach ( ModelItem m in selectedItemsChildren ) {
           itemCollection.Push( m );
         }
@@ -100,7 +98,7 @@ namespace Rimshot.Bindings {
         object arrayData = path.ArrayData;
         int[] pathAsArray = ( ( Array )arrayData ).ToArray<int>();
         string pathAsString = string.Join( ".", pathAsArray );
-        bool v = paths.TryAdd( pathAsString, path );
+        paths.TryAdd( pathAsString, path );
         //}, null );
         //} );
         //firstObjectTasks.Add( task );
@@ -115,15 +113,16 @@ namespace Rimshot.Bindings {
 
       SavedItem si = s;
       si.DisplayName = "Rimshot";
-      si.MakeDisplayNameUnique( ActiveDocument.SelectionSets.RootItem );
+      si.MakeDisplayNameUnique( this.ActiveDocument.SelectionSets.RootItem );
 
       this.Context.Send( o => {
         if ( this.ActiveDocument == null ) {
           return;
         }
-        ActiveDocument.CurrentSelection.Clear();
-        ActiveDocument.CurrentSelection.AddRange( modelItemsHydrated );
-        ActiveDocument.SelectionSets.AddCopy( si );
+
+        this.ActiveDocument.CurrentSelection.Clear();
+        this.ActiveDocument.CurrentSelection.AddRange( modelItemsHydrated );
+        this.ActiveDocument.SelectionSets.AddCopy( si );
       }, null );
     }
 
@@ -147,27 +146,27 @@ namespace Rimshot.Bindings {
 
       dynamic commitPayload = payload;
 
-      this.SpeckleServer.HostUrl = commitPayload.host;
-      this.SpeckleServer.rimshotIssueId = commitPayload.issueId;
+      this._speckleServer.HostUrl = commitPayload.host;
+      this._speckleServer.rimshotIssueId = commitPayload.issueId;
 
-      if ( this.SpeckleServer.HostUrl != this.SpeckleServer.Client.ServerUrl ) {
-        Logging.ErrorLog( $"Host server Url for the issue ({this.SpeckleServer.HostUrl}) does not match the client server Url ({this.SpeckleServer.Client.ServerUrl}). Please check your configuration." );
+      if ( this._speckleServer.HostUrl != this._speckleServer.Client.ServerUrl ) {
+        Logging.ErrorLog( $"Host server Url for the issue ({this._speckleServer.HostUrl}) does not match the client server Url ({this._speckleServer.Client.ServerUrl}). Please check your configuration." );
         return;
       }
 
       RimshotAppBindings app = this;
-      this.SpeckleServer.App = app;
+      this._speckleServer.App = app;
 
-      string description = $"issueId:{this.SpeckleServer.rimshotIssueId}";
+      string description = $"issueId:{this._speckleServer.rimshotIssueId}";
 
-      if ( this.SpeckleServer.Client == null ) { return; }
+      if ( this._speckleServer.Client == null ) { return; }
 
-      await this.SpeckleServer.TryGetStream( commitPayload.stream );
-      await this.SpeckleServer.TryGetBranch( commitPayload.branch, description );
+      await this._speckleServer.TryGetStream( commitPayload.stream );
+      await this._speckleServer.TryGetBranch( commitPayload.branch, description );
 
-      if ( this.SpeckleServer.Branch == null || this.SpeckleServer.Stream == null ) { return; };
+      if ( this._speckleServer.Branch == null || this._speckleServer.Stream == null ) { return; };
 
-      Logging.ConsoleLog( $"Stream: {this.SpeckleServer.StreamId}, Host: {this.SpeckleServer.HostUrl}, Branch: {this.SpeckleServer.BranchName}, Issue: {this.SpeckleServer.rimshotIssueId}" );
+      Logging.ConsoleLog( $"Stream: {this._speckleServer.StreamId}, Host: {this._speckleServer.HostUrl}, Branch: {this._speckleServer.BranchName}, Issue: {this._speckleServer.rimshotIssueId}" );
 
       // Current document, models and selected elements.
       this.ActiveDocument = NavisworksApp.ActiveDocument;
@@ -181,11 +180,11 @@ namespace Rimshot.Bindings {
 
       if ( geometry.selectedItems.IsEmpty ) {
         Logging.ConsoleLog( "Nothing Selected." );
-        NotifyUI( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
-        NotifyUI( "commit_sent", new {
+        NotifyUi( "error", JsonConvert.SerializeObject( new { message = "Nothing Selected." } ) );
+        NotifyUi( "commit_sent", new {
           commitId = "",
-          issueId = this.SpeckleServer.rimshotIssueId,
-          streamId = this.SpeckleServer.StreamId,
+          issueId = this._speckleServer.rimshotIssueId,
+          streamId = this._speckleServer.StreamId,
           objectId = ""
         } );
         return;
@@ -214,8 +213,8 @@ namespace Rimshot.Bindings {
         z = 0
       };
 
-      this.QuickPropertyDefinitions.Clear();
-      this.QuickPropertyDefinitions.AddRange( Props.LoadQuickProperties().Distinct().ToList() );
+      this._quickPropertyDefinitions.Clear();
+      this._quickPropertyDefinitions.AddRange( Props.LoadQuickProperties().Distinct().ToList() );
 
       List<Base> translatedElements = new List<Base>();
 
@@ -248,7 +247,7 @@ namespace Rimshot.Bindings {
 
             geometry.TranslateGeometryElement( nodeNavisGeometry );
 
-            this.QuickProperties = new Base();
+            this._quickProperties = new Base();
 
             // Do the properties and hierarchy conversion work.
             TranslateHierarchyElement( nodeNavisGeometry );
@@ -268,32 +267,30 @@ namespace Rimshot.Bindings {
 
       Task.WhenAll( conversionTasks ).Wait();
 
-      Base myCommit = new Base();
+      Base myCommit = new Base { [ "@Elements" ] = elementsToCommit.ToList() };
 
-      myCommit[ "@Elements" ] = elementsToCommit.ToList();
+      string[] stringSeparators = new string[] { "/" };
+      myCommit[ "Issue Number" ] = this._speckleServer.BranchName.Split( stringSeparators, StringSplitOptions.None )[ 1 ];
+      myCommit[ "applicationId" ] = this._speckleServer.rimshotIssueId;
 
-      string[] stringseparators = new string[] { "/" };
-      myCommit[ "Issue Number" ] = this.SpeckleServer.BranchName.Split( stringseparators, StringSplitOptions.None )[ 1 ];
-      myCommit[ "applicationId" ] = this.SpeckleServer.rimshotIssueId;
-
-      ServerTransport transport = new ServerTransport( this.SpeckleServer.Account, this.SpeckleServer.StreamId );
+      ServerTransport transport = new ServerTransport( this._speckleServer.Account, this._speckleServer.StreamId );
       string hash = Operations.Send( myCommit, new List<ITransport> { transport } ).Result;
 
-      string commitId = this.SpeckleServer.Client.CommitCreate( new CommitCreateInput() {
-        branchName = this.SpeckleServer.BranchName,
+      string commitId = this._speckleServer.Client.CommitCreate( new CommitCreateInput() {
+        branchName = this._speckleServer.BranchName,
         message = commitMessage,
         objectId = hash,
-        streamId = this.SpeckleServer.StreamId,
+        streamId = this._speckleServer.StreamId,
         sourceApplication = "Rimshot"
       } ).Result;
 
-      Commit commitObject = this.SpeckleServer.Client.CommitGet( this.SpeckleServer.StreamId, commitId ).Result;
+      Commit commitObject = this._speckleServer.Client.CommitGet( this._speckleServer.StreamId, commitId ).Result;
       string referencedObject = commitObject.referencedObject;
 
-      NotifyUI( "commit_sent", new {
+      NotifyUi( "commit_sent", new {
         commitId,
-        issueId = this.SpeckleServer.rimshotIssueId,
-        streamId = this.SpeckleServer.StreamId,
+        issueId = this._speckleServer.rimshotIssueId,
+        streamId = this._speckleServer.StreamId,
         objectId = referencedObject
       } );
 
@@ -303,7 +300,7 @@ namespace Rimshot.Bindings {
         geometry.selectedItemsAndDescendants.Clear();
         geometry.pathDictionary.Clear();
         uniqueGeometryNodes.Clear();
-        this.QuickPropertyDefinitions.Clear();
+        this._quickPropertyDefinitions.Clear();
         elementsToCommit = new ConcurrentBag<Base>();
         uniqueGeometryNodes = new ConcurrentDictionary<NavisGeometry, bool>();
       } catch ( Exception e ) {
@@ -311,37 +308,31 @@ namespace Rimshot.Bindings {
       }
     }
     [HandleProcessCorruptedStateExceptions, SecurityCritical]
-    public void TranslateHierarchyElement ( NavisGeometry geometrynode ) {
+    public void TranslateHierarchyElement ( NavisGeometry geometryNode ) {
       ModelItem firstObject;
       try {
-        firstObject = geometrynode.ModelItem.FindFirstObjectAncestor();
+        firstObject = geometryNode.ModelItem.FindFirstObjectAncestor();
 
       } catch ( Exception e ) {
         Console.WriteLine( e.Message );
         firstObject = null;
       }
       // Geometry Object may be the first object.
-      if ( firstObject == null ) {
-        // Process the Geometry Base object as the root object.
-        geometrynode.Base = ToSpeckle.BuildBaseObjectTree( geometrynode.ModelItem, geometrynode, this.QuickPropertyDefinitions, ref this.QuickProperties );
-      } else {
-        geometrynode.Base = ToSpeckle.BuildBaseObjectTree( firstObject, geometrynode, this.QuickPropertyDefinitions, ref this.QuickProperties );
-      }
+      // Process the Geometry Base object as the root object.
+      geometryNode.Base = firstObject == null ? ToSpeckle.BuildBaseObjectTree( geometryNode.ModelItem, geometryNode, this._quickPropertyDefinitions, ref this._quickProperties ) : ToSpeckle.BuildBaseObjectTree( firstObject, geometryNode, this._quickPropertyDefinitions, ref this._quickProperties );
     }
 
-    async private void SendIssueView () {
-      MemoryStream stream;
-      byte[] imageBytes;
+    private async void SendIssueView () {
       Guid id = Guid.NewGuid();
       SavedViewpoint oNewViewPt1 = new SavedViewpoint( Navis.ActiveDocument.CurrentViewpoint.ToViewpoint() ) {
         Guid = id,
-        DisplayName = string.Format( "View - {0}", id )
+        DisplayName = $"View - {id}"
       };
       Navis.ActiveDocument.SavedViewpoints.AddCopy( oNewViewPt1 );
       Snapshot issueSnapshot = new Snapshot( oNewViewPt1 ) { name = "View" };
 
-      ComApi.InwOpState10 oState = ComBridge.State;
-      ComApi.InwOaPropertyVec options = oState.GetIOPluginOptions( "lcodpimage" );
+      InwOpState10 oState = ComBridge.State;
+      InwOaPropertyVec options = oState.GetIOPluginOptions( "lcodpimage" );
 
       this._tempFolder = Path.Combine( Path.GetTempPath(), "Rimshot.ExportBCF", Path.GetRandomFileName() );
 
@@ -354,32 +345,30 @@ namespace Rimshot.Bindings {
 
       Directory.CreateDirectory( snapshotFolder );
 
-      foreach ( ComApi.InwOaProperty option in options.Properties() ) {
-        if ( option.name == "export.image.format" ) {
-          option.value = "lcodpexpng";
-        }
-
-        if ( option.name == "export.image.width" ) {
-          option.value = 1600;
-        }
-
-        if ( option.name == "export.image.height" ) {
-          option.value = 900;
+      foreach ( InwOaProperty option in options.Properties() ) {
+        switch ( option.name ) {
+          case "export.image.format":
+            option.value = "lcodpexpng";
+            break;
+          case "export.image.width":
+            option.value = 1600;
+            break;
+          case "export.image.height":
+            option.value = 900;
+            break;
         }
       }
       oState.DriveIOPlugin( "lcodpimage", snapshotFile, options );
 
       try {
-        stream = new MemoryStream();
+        MemoryStream stream = new MemoryStream();
 
         Bitmap oBitmap = new Bitmap( snapshotFile );
         Bitmap tBitmap = new Bitmap( snapshotFile );
 
         oBitmap.Save( stream, System.Drawing.Imaging.ImageFormat.Jpeg );
-        imageBytes = stream.ToArray();
+        byte[] imageBytes = stream.ToArray();
         issueSnapshot.image = Convert.ToBase64String( imageBytes );
-
-        ImageViewpoint viewpoint = new ImageViewpoint( oNewViewPt1 );
 
         oBitmap.Dispose();
         tBitmap.Dispose();
@@ -390,23 +379,23 @@ namespace Rimshot.Bindings {
       string imageString = JsonConvert.SerializeObject( issueSnapshot );
 
       SetImage( imageString );
-      NotifyUI( "new-image", imageString );
+      NotifyUi( "new-image", imageString );
 
       try {
 
         int threadId = Thread.CurrentThread.ManagedThreadId;
         Console.WriteLine( $"Set View thread {threadId}" );
 
-        //if ( this.UIThread.InvokeRequired ) {
-        //  this.UIThread.Invoke( new GoDelegate( AddSelectionSet ) );
+        //if ( this.UiThread.InvokeRequired ) {
+        //  this.UiThread.Invoke( new GoDelegate( AddSelectionSet ) );
         //} else {
         //  AddSelectionSet();
         //}
 
-        List<Task> Tasks = new List<Task>();
+        List<Task> tasks = new List<Task>();
         ConcurrentStack<bool> stack = new ConcurrentStack<bool>();
         for ( int i = 0; i < 100; i++ ) {
-          Tasks.Add( Task.Run( () => {
+          tasks.Add( Task.Run( () => {
             ForegroundWorker fw = new ForegroundWorker();
 
             _ = fw.Send( o => {
@@ -423,7 +412,7 @@ namespace Rimshot.Bindings {
             }, this.Context );
 
             _ = fw.Send( o => {
-              IntPtr hWnd = Autodesk.Navisworks.Api.Application.Gui.MainWindow.Handle;
+              IntPtr hWnd = Application.Gui.MainWindow.Handle;
               UpdateWindow( hWnd );
             }, this.Context );
 
@@ -431,7 +420,7 @@ namespace Rimshot.Bindings {
           } ) );
         }
 
-        await Task.WhenAll( Tasks );
+        await Task.WhenAll( tasks );
         Console.WriteLine( "All Gone." );
 
         //Navis.ActiveDocument.SelectionSets.AddCopy( s );
@@ -447,12 +436,12 @@ namespace Rimshot.Bindings {
     internal object Response { get; set; }
 
     internal object Send ( SendOrPostCallback function, SynchronizationContext context ) {
-      context.Send( function, Response );
+      context.Send( function, this.Response );
 
       return this.Response;
     }
     internal object Post ( SendOrPostCallback function, SynchronizationContext context ) {
-      context.Post( function, Response );
+      context.Post( function, this.Response );
 
       return this.Response;
     }

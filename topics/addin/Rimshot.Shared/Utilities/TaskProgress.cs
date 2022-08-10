@@ -5,7 +5,7 @@ using NavisworksApp = Autodesk.Navisworks.Api.Application;
 namespace Rimshot {
   class TaskProgress {
 
-    public bool progressIsCancelled = false;
+    public bool progressIsCancelled;
 
     #region Event Handlers
 

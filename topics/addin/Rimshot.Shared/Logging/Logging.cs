@@ -13,7 +13,7 @@ namespace Rimshot {
       ErrorLog( err.Message );
 
       if ( err is SpeckleException ) {
-        app.NotifyUI( "error", new { message = err.Message } );
+        app.NotifyUi( "error", new { message = err.Message } );
         return;
       }
       throw err;

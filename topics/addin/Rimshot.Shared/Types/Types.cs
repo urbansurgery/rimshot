@@ -5,26 +5,26 @@ using COMApi = Autodesk.Navisworks.Api.Interop.ComApi;
 namespace Rimshot.Analysis {
   public class Triangle {
 
-    private readonly Tuple<CoordPt, CoordPt, CoordPt> triangle;
+    private readonly Tuple<CoordinatePt, CoordinatePt, CoordinatePt> _triangle;
 
-    public Triangle ( CoordPt vertex1, CoordPt vertex2, CoordPt vertex3 ) {
-      triangle = new Tuple<CoordPt, CoordPt, CoordPt>( vertex1, vertex2, vertex3 );
+    public Triangle ( CoordinatePt vertex1, CoordinatePt vertex2, CoordinatePt vertex3 ) {
+      this._triangle = new Tuple<CoordinatePt, CoordinatePt, CoordinatePt>( vertex1, vertex2, vertex3 );
     }
 
     public Triangle ( COMApi.InwSimpleVertex v1, COMApi.InwSimpleVertex v2, COMApi.InwSimpleVertex v3 ) {
 
-      CoordPt vertex1 = new CoordPt( v1 );
-      CoordPt vertex2 = new CoordPt( v2 );
-      CoordPt vertex3 = new CoordPt( v3 );
+      CoordinatePt vertex1 = new CoordinatePt( v1 );
+      CoordinatePt vertex2 = new CoordinatePt( v2 );
+      CoordinatePt vertex3 = new CoordinatePt( v3 );
 
-      this.triangle = new Tuple<CoordPt, CoordPt, CoordPt>( vertex1, vertex2, vertex3 );
+      this._triangle = new Tuple<CoordinatePt, CoordinatePt, CoordinatePt>( vertex1, vertex2, vertex3 );
     }
 
-    public Triangle ToXYPlane () {
+    public Triangle ToXyPlane () {
 
-      CoordPt v1 = this.triangle.Item1;
-      CoordPt v2 = this.triangle.Item2;
-      CoordPt v3 = this.triangle.Item3;
+      CoordinatePt v1 = this._triangle.Item1;
+      CoordinatePt v2 = this._triangle.Item2;
+      CoordinatePt v3 = this._triangle.Item3;
 
       v1.Z = 0;
       v2.Z = 0;
@@ -32,11 +32,11 @@ namespace Rimshot.Analysis {
 
       return new Triangle( v1, v2, v3 );
     }
-    public Triangle ToXZPlane () {
+    public Triangle ToXzPlane () {
 
-      CoordPt v1 = this.triangle.Item1;
-      CoordPt v2 = this.triangle.Item2;
-      CoordPt v3 = this.triangle.Item3;
+      CoordinatePt v1 = this._triangle.Item1;
+      CoordinatePt v2 = this._triangle.Item2;
+      CoordinatePt v3 = this._triangle.Item3;
 
       v1.Y = 0;
       v2.Y = 0;
@@ -44,11 +44,11 @@ namespace Rimshot.Analysis {
 
       return new Triangle( v1, v2, v3 );
     }
-    public Triangle ToYZPlane () {
+    public Triangle ToYzPlane () {
 
-      CoordPt v1 = this.triangle.Item1;
-      CoordPt v2 = this.triangle.Item2;
-      CoordPt v3 = this.triangle.Item3;
+      CoordinatePt v1 = this._triangle.Item1;
+      CoordinatePt v2 = this._triangle.Item2;
+      CoordinatePt v3 = this._triangle.Item3;
 
       v1.X = 0;
       v2.X = 0;
@@ -61,27 +61,27 @@ namespace Rimshot.Analysis {
 
       BoundingBox3D bb = new BoundingBox3D();
 
-      bb.Extend( triangle.Item1.ToPoint3D() );
-      bb.Extend( triangle.Item1.ToPoint3D() );
-      bb.Extend( triangle.Item1.ToPoint3D() );
+      bb.Extend( this._triangle.Item1.ToPoint3D() );
+      bb.Extend( this._triangle.Item1.ToPoint3D() );
+      bb.Extend( this._triangle.Item1.ToPoint3D() );
 
       return bb;
     }
   }
 
-  public class CoordPt {
+  public class CoordinatePt {
 
-    Tuple<double, double, double> _coord;
+    Tuple<double, double, double> _coordinate;
 
-    public CoordPt ( double X = 0, double Y = 0, double Z = 0 ) {
-      _coord = new Tuple<double, double, double>( X, Y, Z );
+    public CoordinatePt ( double x = 0, double y = 0, double z = 0 ) {
+      this._coordinate = new Tuple<double, double, double>( x, y, z );
     }
 
-    public CoordPt ( Point3D vertex ) {
-      _coord = new Tuple<double, double, double>( vertex.X, vertex.Y, vertex.Z );
+    public CoordinatePt ( Point3D vertex ) {
+      this._coordinate = new Tuple<double, double, double>( vertex.X, vertex.Y, vertex.Z );
     }
 
-    public CoordPt ( COMApi.InwSimpleVertex vertex ) {
+    public CoordinatePt ( COMApi.InwSimpleVertex vertex ) {
       Array arrayVertex = ( Array )vertex.coord;
 
       double vX = Convert.ToDouble( arrayVertex.GetValue( 1 ) );
@@ -90,20 +90,20 @@ namespace Rimshot.Analysis {
 
       Tuple<double, double, double> t = new Tuple<double, double, double>( vX, vY, vZ );
 
-      _coord = t;
+      this._coordinate = t;
     }
 
     public double X {
-      get { return _coord.Item1; }
-      set { _coord = new Tuple<double, double, double>( value, _coord.Item2, _coord.Item3 ); }
+      get => this._coordinate.Item1;
+      set => this._coordinate = new Tuple<double, double, double>( value, this._coordinate.Item2, this._coordinate.Item3 );
     }
     public double Y {
-      get { return _coord.Item2; }
-      set { _coord = new Tuple<double, double, double>( _coord.Item1, value, _coord.Item3 ); }
+      get => this._coordinate.Item2;
+      set => this._coordinate = new Tuple<double, double, double>( this._coordinate.Item1, value, this._coordinate.Item3 );
     }
     public double Z {
-      get { return _coord.Item3; }
-      set { _coord = new Tuple<double, double, double>( _coord.Item1, _coord.Item2, value ); }
+      get => this._coordinate.Item3;
+      set => this._coordinate = new Tuple<double, double, double>( this._coordinate.Item1, this._coordinate.Item2, value );
     }
 
     public Point3D ToPoint3D () => new Point3D( this.X, this.Y, this.Z );

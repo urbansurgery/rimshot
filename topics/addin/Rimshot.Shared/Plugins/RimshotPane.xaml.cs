@@ -10,7 +10,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-
+using Control = System.Windows.Forms.Control;
 using NavisworksApp = Autodesk.Navisworks.Api.Application;
 using Path = System.IO.Path;
 
@@ -22,8 +22,7 @@ namespace Rimshot {
     internal Guid guid;
     [JsonProperty]
     internal string image = "";
-    [JsonProperty]
-    internal string thumbnail = "";
+
     [JsonProperty]
     internal ImageViewpoint viewpoint;
 
@@ -42,8 +41,6 @@ namespace Rimshot {
 
     public Bindings bindings;
 
-    System.Windows.Forms.Control syncControl;
-
     public readonly Document activeDocument = NavisworksApp.ActiveDocument;
 
     public void SetSelections ( IEnumerable<ModelItem> modelItems ) {
@@ -57,8 +54,7 @@ namespace Rimshot {
       this.activeDocument.SelectionSets.AddCopy( s );
     }
     public RimshotPane ( string address = RimshotAppBindings.Url ) {
-
-      syncControl = new System.Windows.Forms.Control();
+      Control syncControl = new Control();
       syncControl.CreateControl();
       SynchronizationContext context = SynchronizationContext.Current;
 
@@ -68,7 +64,7 @@ namespace Rimshot {
       this.bindings = new Bindings {
         Browser = this.Browser,
         Window = this,
-        UIThread = syncControl,
+        UiThread = syncControl,
         Context = context
       };
 
@@ -111,25 +107,22 @@ namespace Rimshot {
 
     [HandleProcessCorruptedStateExceptions]
     private void CurrentViewpoint_Changed ( object sender, EventArgs e ) {
+      if ( !( sender is Document doc ) ) {
+        return;
+      }
 
-      if ( sender != null ) {
+      Viewpoint p = doc.CurrentViewpoint;
 
-        Document doc = sender as Document;
-        Viewpoint p = doc.CurrentViewpoint;
+      try {
+        string camera = p.GetCamera();
+        this.bindings.UpdateView( camera );
 
-        try {
-          string camera = p.GetCamera();
-          this.bindings.UpdateView( camera );
-
-        } catch ( AccessViolationException err ) {
-          Console.WriteLine( "View camera accessed prematurely" );
-          Console.WriteLine( err.Message );
-        }
+      } catch ( AccessViolationException err ) {
+        Console.WriteLine( "View camera accessed prematurely" );
+        Console.WriteLine( err.Message );
       }
     }
 
-    public static implicit operator RimshotPane ( SpecklePane v ) {
-      throw new NotImplementedException();
-    }
+
   }
 }

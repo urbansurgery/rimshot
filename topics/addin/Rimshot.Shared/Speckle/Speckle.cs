@@ -24,7 +24,7 @@ namespace Rimshot.SpeckleApi {
       Account defaultAccount = AccountManager.GetDefaultAccount();
 
       if ( defaultAccount == null ) {
-        Logging.ErrorLog( new SpeckleException( $"You do not have any accounts active. Please create one or add it to the Speckle Manager." ), this.App );
+        Logging.ErrorLog( new SpeckleException( "You do not have any accounts active. Please create one or add it to the Speckle Manager." ), null );
         return;
       }
 
@@ -49,8 +49,8 @@ namespace Rimshot.SpeckleApi {
     private Task<Branch> CreateBranch ( string name, string description ) {
 
       try {
-        Task<string> branchId = Client.BranchCreate( new BranchCreateInput() {
-          streamId = StreamId,
+        this.Client.BranchCreate( new BranchCreateInput() {
+          streamId = this.StreamId,
           name = name,
           description = description
         } );
@@ -87,11 +87,10 @@ namespace Rimshot.SpeckleApi {
           Branch = Client.BranchGet( this.StreamId, this.BranchName, 1 ).Result;
 
           if ( Branch != null ) {
-            App.NotifyUI( "branch_updated", JsonConvert.SerializeObject( new { branch = Branch.name, rimshotIssueId } ) );
+            App.NotifyUi( "branch_updated", JsonConvert.SerializeObject( new { branch = Branch.name, rimshotIssueId } ) );
           }
         } catch ( Exception ) {
           Logging.ErrorLog( new SpeckleException( $"Still unable to find an issue branch for {BranchName}" ), App );
-          return;
         }
       }
     }

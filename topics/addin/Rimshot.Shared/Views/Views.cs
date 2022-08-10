@@ -7,8 +7,6 @@ using NavisworksApp = Autodesk.Navisworks.Api.Application;
 
 namespace Rimshot.Views {
   public class Views {
-    public Views () { }
-
     /// Show only items in Selection Set
     internal static void ShowSelectionSet_COM ( SelectionSet selectionSet ) => LcOpSelectionSetsElement.MakeVisible( NavisworksApp.MainDocument.State, selectionSet );
     /// Show only items in Model Item Collection 
@@ -18,21 +16,20 @@ namespace Rimshot.Views {
   public class ImageViewpoint {
 
     [JsonProperty]
-    internal Point3D CameraViewpoint { get; private set; }
+    internal Point3D CameraViewpoint { get; }
     [JsonProperty]
-    internal Vector3D CameraDirection { get; private set; }
+    internal Vector3D CameraDirection { get; }
     [JsonProperty]
-    internal Vector3D CameraUpVector { get; private set; }
+    internal Vector3D CameraUpVector { get; }
     [JsonProperty]
-    internal double FieldOfView { get; private set; }
+    internal double FieldOfView { get; }
     [JsonProperty]
-    internal double AspectRatio { get; private set; }
+    internal double AspectRatio { get; }
+
     [JsonProperty]
-    internal double ViewToWorldScale { get; private set; }
+    internal object ClippingPlanes { get; }
     [JsonProperty]
-    internal object ClippingPlanes { get; private set; }
-    [JsonProperty]
-    internal string CameraType { get; private set; }
+    internal string CameraType { get; }
 
     public ImageViewpoint ( SavedViewpoint view ) {
       string type = "";
@@ -71,8 +68,8 @@ namespace Rimshot.Views {
       this.FieldOfView = vp.HeightField;
       this.AspectRatio = vp.AspectRatio;
 
-      object ClippingPlanes = JsonConvert.DeserializeObject( NavisworksApp.ActiveDocument.ActiveView.GetClippingPlanes() );
-      this.ClippingPlanes = ClippingPlanes;
+      object passedClippingPlanes = JsonConvert.DeserializeObject( NavisworksApp.ActiveDocument.ActiveView.GetClippingPlanes() );
+      this.ClippingPlanes = passedClippingPlanes;
 
       System.Reflection.PropertyInfo prop = GetType().GetProperty( zoom );
       if ( prop != null && prop.CanWrite ) {
@@ -83,24 +80,24 @@ namespace Rimshot.Views {
 
     }
 
-    private Vector3D GetViewDir ( Viewpoint oVP ) {
-      Rotation3D oRot = oVP.Rotation;
+    private Vector3D GetViewDir ( Viewpoint oVp ) {
+      Rotation3D oRot = oVp.Rotation;
       // calculate view direction
-      Rotation3D oNegtiveZ = new Rotation3D( 0, 0, -1, 0 );
-      Rotation3D otempRot = MultiplyRotation3D( oNegtiveZ, oRot.Invert() );
-      Rotation3D oViewDirRot = MultiplyRotation3D( oRot, otempRot );
+      Rotation3D oNegativeZ = new Rotation3D( 0, 0, -1, 0 );
+      Rotation3D oTempRotation = MultiplyRotation3D( oNegativeZ, oRot.Invert() );
+      Rotation3D oViewDirRot = MultiplyRotation3D( oRot, oTempRotation );
       // get view direction
       Vector3D oViewDir = new Vector3D( oViewDirRot.A, oViewDirRot.B, oViewDirRot.C );
 
       return oViewDir.Normalize();
     }
-    private Vector3D GetViewUp ( Viewpoint oVP ) {
+    private Vector3D GetViewUp ( Viewpoint oVp ) {
 
-      Rotation3D oRot = oVP.Rotation;
+      Rotation3D oRot = oVp.Rotation;
       // calculate view direction
-      Rotation3D oNegtiveZ = new Rotation3D( 0, 1, 0, 0 );
-      Rotation3D otempRot = MultiplyRotation3D( oNegtiveZ, oRot.Invert() );
-      Rotation3D oViewDirRot = MultiplyRotation3D( oRot, otempRot );
+      Rotation3D oNegativeZ = new Rotation3D( 0, 1, 0, 0 );
+      Rotation3D oTempRotation = MultiplyRotation3D( oNegativeZ, oRot.Invert() );
+      Rotation3D oViewDirRot = MultiplyRotation3D( oRot, oTempRotation );
       // get view direction
       Vector3D oViewDir = new Vector3D( oViewDirRot.A, oViewDirRot.B, oViewDirRot.C );
 
