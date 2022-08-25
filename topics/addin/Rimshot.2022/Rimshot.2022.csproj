@@ -163,7 +163,7 @@
       <Version>1.0.115.5</Version>
     </PackageReference>
     <PackageReference Include="System.Reactive">
-      <Version>4.3.2</Version>
+      <Version>4.4.1</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="..\Rimshot.Shared\Rimshot.Shared.projitems" Label="Shared" />
