@@ -1,3 +1,7 @@
+# This is definitely being developed in the open, but don't count on any of the code being fully functional until a Release announcement.
+
+
+
 <img src="https://user-images.githubusercontent.com/760691/173029738-0d8e4e7e-47f1-4bc4-a08c-16e72622dd65.png?raw=true" alt="logo" width="150"/>
 
 # Rimshot<br />Realtime Issue Management with Speckle #
